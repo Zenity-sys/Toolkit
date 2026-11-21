@@ -153,7 +153,8 @@ namespace KavrosClueHelper
         public uint ProcessId;
         public Rectangle Client;
         public bool Automatic;
-        public override string ToString() { return Title; }
+        public string Display;
+        public override string ToString() { return string.IsNullOrEmpty(Display) ? Title : Display; }
     }
 
     public sealed class HelperForm : Form
@@ -325,7 +326,13 @@ namespace KavrosClueHelper
             }, IntPtr.Zero);
             found = found.Where(w => w.Title.IndexOf("Kavros", StringComparison.OrdinalIgnoreCase) >= 0).OrderBy(w => w.Title).ToList();
             windows.Items.Clear();
-            foreach (GameWindow window in found) windows.Items.Add(window);
+            int n = 0;
+            foreach (GameWindow window in found)
+            {
+                window.Display = ClientIdentity.Label(window.ProcessId, n, window.Title);
+                n++;
+                windows.Items.Add(window);
+            }
             int selected = found.FindIndex(w => w.Handle == previous);
             if (selected >= 0) windows.SelectedIndex = selected;
             else if (previous == IntPtr.Zero && found.Count == 1) windows.SelectedIndex = 0;

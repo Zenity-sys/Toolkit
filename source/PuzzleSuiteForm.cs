@@ -381,7 +381,13 @@ namespace KavrosClueHelper
             {
                 windows.Items.Clear();
                 windows.Items.Add(new GameWindow { Automatic = true, Title = "Auto - find the Kavros game window" });
-                foreach (GameWindow window in availableWindows) windows.Items.Add(window);
+                int n = 0;
+                foreach (GameWindow window in availableWindows)
+                {
+                    window.Display = ClientIdentity.Label(window.ProcessId, n, window.Title);
+                    n++;
+                    windows.Items.Add(window);
+                }
                 int index = manual ? availableWindows.FindIndex(w => w.Handle == selected) : -1;
                 windows.SelectedIndex = index < 0 ? 0 : index + 1;
             }
