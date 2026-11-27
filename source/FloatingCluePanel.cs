@@ -17,6 +17,7 @@ namespace KavrosClueHelper
         public bool CheckForUpdates = true;
         public bool BlurPreview;
         public bool LegacyInterface;
+        public bool DarkscapeInterface;
         public int Resolution, Scaling;
         public int ResolutionManual=1080, ScalingManual=100;
         public Point Offset=new Point(12,72);
@@ -38,7 +39,11 @@ namespace KavrosClueHelper
                     if(p.Length==2&&p[0]=="whole-row-clicks")WholeRowClicks=true;
                     if(p.Length==2&&p[0]=="check-updates"&&Boolean.TryParse(p[1],out b))CheckForUpdates=b;
                     if(p.Length==2&&p[0]=="blur-preview"&&Boolean.TryParse(p[1],out b))BlurPreview=b;
-                    if(p.Length==2&&p[0]=="interface")LegacyInterface=p[1]=="legacy";
+                    if(p.Length==2&&p[0]=="interface")
+                    {
+                        LegacyInterface=p[1]=="legacy";
+                        DarkscapeInterface=p[1]=="darkscape";
+                    }
                     if(p.Length==2&&p[0]=="resolution")Resolution=ParseChoice(p[1],1080,1440,2160);
                     if(p.Length==2&&p[0]=="scaling")Scaling=ParseChoice(p[1],100,125,150,200);
                     if(p.Length==2&&p[0]=="resolution-manual")ResolutionManual=ParseChoice(p[1],1080,1440,2160)==0?1080:ParseChoice(p[1],1080,1440,2160);
@@ -72,7 +77,7 @@ namespace KavrosClueHelper
                 lines.Add("whole-row-clicks\t"+WholeRowClicks);
                 lines.Add("check-updates\t"+CheckForUpdates);
                 lines.Add("blur-preview\t"+BlurPreview);
-                lines.Add("interface\t"+(LegacyInterface?"legacy":"modern"));
+                lines.Add("interface\t"+(LegacyInterface?"legacy":(DarkscapeInterface?"darkscape":"modern")));
                 lines.Add("resolution\t"+(Resolution==0?"auto":Resolution.ToString()));
                 lines.Add("scaling\t"+(Scaling==0?"auto":Scaling.ToString()));
                 lines.Add("resolution-manual\t"+ResolutionManual);
@@ -250,6 +255,12 @@ namespace KavrosClueHelper
         public event Action QuickSliderRequested;
         private Label banner; private Timer bannerTimer; private bool bannerShown, layoutBanner;
         private const int BannerHeight = 28;
+        private Panel updateHost;
+        private Label updateText;
+        private Button updateButton, updateDismiss;
+        private bool updateOffered, layoutUpdate;
+        private const int UpdateBarHeight = 28;
+        public event Action UpdateRequested;
         private Panel notesHost;
         private TextBox notesBody;
         private bool notesOpen, layoutNotes;
@@ -272,6 +283,46 @@ namespace KavrosClueHelper
             bannerShown = true;
             LayoutMode();
             bannerTimer.Stop(); bannerTimer.Start();
+        }
+        public void OfferUpdate(string version)
+        {
+            if (IsDisposed || string.IsNullOrEmpty(version)) return;
+            if (InvokeRequired)
+            {
+                try { BeginInvoke(new Action<string>(OfferUpdate), version); }
+                catch (ObjectDisposedException) { }
+                catch (InvalidOperationException) { }
+                return;
+            }
+            EnsureUpdateOffer();
+            updateText.Text = "Update " + version + " available";
+            updateOffered = true;
+            LayoutMode();
+        }
+        public void DismissUpdateOffer()
+        {
+            if (!updateOffered) return;
+            updateOffered = false;
+            LayoutMode();
+        }
+        void EnsureUpdateOffer()
+        {
+            if (updateHost != null) return;
+            updateHost = new Panel { Name = "UpdateOffer", Height = UpdateBarHeight, BackColor = KavrosTheme.Panel, Visible = false };
+            updateText = new Label { Name = "UpdateOfferText", AutoSize = false, TextAlign = ContentAlignment.MiddleLeft, ForeColor = KavrosTheme.Gold, BackColor = KavrosTheme.Panel, Font = KavrosTheme.Ui(8.5F, true) };
+            updateButton = new OpaqueButton { Name = "UpdateOfferButton", Text = "Update" };
+            Style(updateButton);
+            updateButton.BackColor = KavrosTheme.Gold;
+            updateButton.ForeColor = KavrosTheme.GoldInk;
+            updateButton.FlatAppearance.BorderColor = KavrosTheme.GoldEdge;
+            updateButton.Click += delegate { if (UpdateRequested != null) UpdateRequested(); };
+            updateDismiss = new OpaqueButton { Name = "UpdateOfferDismiss", Text = "\u00d7" };
+            Style(updateDismiss);
+            updateDismiss.Click += delegate { DismissUpdateOffer(); };
+            updateHost.Controls.Add(updateText);
+            updateHost.Controls.Add(updateButton);
+            updateHost.Controls.Add(updateDismiss);
+            Controls.Add(updateHost);
         }
         public void SetQuickOption(bool available)
         {
@@ -559,8 +610,9 @@ namespace KavrosClueHelper
             bool showNotes=notesOpen&&expanded;
             int notesExtra=showNotes?WhatsNewLayout.PanelExtra:0;
             int bannerSpace=bannerShown?BannerHeight:0;
-            Size wanted=new Size(400,(prefs.Collapsed?32:bottom+38)+notesExtra+bannerSpace);
-            bool changed=layoutKind!=mode||layoutCollapsed!=prefs.Collapsed||layoutBanner!=bannerShown||layoutNotes!=showNotes||ClientSize!=wanted;
+            int updateSpace=updateOffered?UpdateBarHeight+1:0;
+            Size wanted=new Size(400,(prefs.Collapsed?32:bottom+38)+notesExtra+bannerSpace+updateSpace);
+            bool changed=layoutKind!=mode||layoutCollapsed!=prefs.Collapsed||layoutBanner!=bannerShown||layoutNotes!=showNotes||layoutUpdate!=updateOffered||ClientSize!=wanted;
             if(!changed)return;
             SuspendLayout();
             try
@@ -580,8 +632,27 @@ namespace KavrosClueHelper
                     notesHost.Visible=showNotes;
                     if(showNotes){PlaceReleaseNotes(footer.Bottom+WhatsNewLayout.PanelGap,380);notesHost.BringToFront();}
                 }
-                if(banner!=null){banner.SetBounds(1,wanted.Height-BannerHeight-1,wanted.Width-2,BannerHeight);banner.Visible=bannerShown;if(bannerShown)banner.BringToFront();}
-                layoutKind=mode;layoutCollapsed=prefs.Collapsed;layoutBanner=bannerShown;layoutNotes=showNotes;
+                if(updateHost!=null)
+                {
+                    updateHost.Visible=updateOffered;
+                    if(updateOffered)
+                    {
+                        int width=wanted.Width-2;
+                        updateHost.SetBounds(1,wanted.Height-UpdateBarHeight-1,width,UpdateBarHeight);
+                        updateDismiss.SetBounds(width-26,3,22,22);
+                        updateButton.SetBounds(width-94,3,64,22);
+                        updateText.SetBounds(8,0,Math.Max(40,updateButton.Left-12),UpdateBarHeight);
+                        updateHost.BringToFront();
+                    }
+                }
+                if(banner!=null)
+                {
+                    int bannerTop=wanted.Height-BannerHeight-1-(updateOffered?UpdateBarHeight+1:0);
+                    banner.SetBounds(1,bannerTop,wanted.Width-2,BannerHeight);
+                    banner.Visible=bannerShown;
+                    if(bannerShown)banner.BringToFront();
+                }
+                layoutKind=mode;layoutCollapsed=prefs.Collapsed;layoutBanner=bannerShown;layoutNotes=showNotes;layoutUpdate=updateOffered;
             }
             finally{ResumeLayout(true);}
             Invalidate(true);

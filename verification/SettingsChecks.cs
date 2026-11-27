@@ -29,8 +29,8 @@ public sealed class SettingsChecks : MarshalByRefObject
         {
             var footer=form.Controls.Find("BuildCredit",true).OfType<Label>().Single();
             var crest=form.Controls.Find("KavrosCrest",true).OfType<PictureBox>().Single();
-            if(footer.Text!="Made by Zenity  ·  v0.9.13"||form.Text!="Kavros Clue Helper · v0.9.13"||crest.Image==null||form.Icon==null)throw new Exception("Missing branding or incorrect version: "+footer.Text+" / "+form.Text);
-            if(form.Controls.Find("ModernInterface",true).Length!=1||form.Controls.Find("LegacyInterface",true).Length!=1)throw new Exception("Interface toggles are missing.");
+            if(footer.Text!="Made by Zenity  ·  v0.9.14"||form.Text!="Kavros Clue Helper · v0.9.14"||crest.Image==null||form.Icon==null)throw new Exception("Missing branding or incorrect version: "+footer.Text+" / "+form.Text);
+            if(form.Controls.Find("ModernInterface",true).Length!=1||form.Controls.Find("DarkscapeInterface",true).Length!=1||form.Controls.Find("LegacyInterface",true).Length!=1)throw new Exception("Interface toggles are missing.");
             const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
             var option=(CheckBox)typeof(PuzzleSuiteForm).GetField("reverse",flags).GetValue(form);
             var summary=(Label)typeof(PuzzleSuiteForm).GetField("summary",flags).GetValue(form);
@@ -54,7 +54,12 @@ public sealed class SettingsChecks : MarshalByRefObject
         Label interfaceLabel=(Label)form.Controls.Find("InterfaceLabel",true)[0];
         Label resolutionLabel=(Label)form.Controls.Find("ResolutionLabel",true)[0];
         Label scalingLabel=(Label)form.Controls.Find("ScalingLabel",true)[0];
+        Control modern=form.Controls.Find("ModernInterface",true)[0];
+        Control darkscape=form.Controls.Find("DarkscapeInterface",true)[0];
         Control legacy=form.Controls.Find("LegacyInterface",true)[0];
+        if(modern.Text!="Modern"||darkscape.Text!="DarkScape"||legacy.Text!="Legacy")throw new Exception(scale+": the interface buttons are not Modern, DarkScape and Legacy.");
+        if(modern.Top!=darkscape.Top||darkscape.Top!=legacy.Top||modern.Height!=legacy.Height)throw new Exception(scale+": the interface buttons are not on one row.");
+        if(modern.Bounds.IntersectsWith(darkscape.Bounds)||darkscape.Bounds.IntersectsWith(legacy.Bounds)||modern.Right>darkscape.Left||darkscape.Right>legacy.Left)throw new Exception(scale+": the interface buttons overlap.");
         Control resolution=form.Controls.Find("ResolutionChoice",true)[0];
         Control scaling=form.Controls.Find("ScalingChoice",true)[0];
         if(whatsNew==null)throw new Exception("What's new button is missing.");

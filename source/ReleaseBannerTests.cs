@@ -16,8 +16,8 @@ namespace KavrosClueHelper
             {
                 Action<bool, string> check = delegate(bool ok, string msg) { count++; if (!ok) throw new Exception(msg); };
                 string notes = ReleaseNotes.Text();
-                check(notes.Contains("v0.9.13") && notes.Contains("v0.9.12") && notes.Contains("v0.9.11") && notes.Contains("v0.9.10") && notes.Contains("v0.9.9") && notes.Contains("v0.9.8"), "notes list the current version and the recent ones");
-                check(notes.IndexOf("v0.9.13") < notes.IndexOf("v0.9.12") && notes.IndexOf("v0.9.12") < notes.IndexOf("v0.9.11") && notes.IndexOf("v0.9.11") < notes.IndexOf("v0.9.8"), "newer notes come first");
+                check(notes.Contains("v0.9.14") && notes.Contains("v0.9.13") && notes.Contains("v0.9.12") && notes.Contains("v0.9.11") && notes.Contains("v0.9.10") && notes.Contains("v0.9.9") && notes.Contains("v0.9.8"), "notes list the current version and the recent ones");
+                check(notes.IndexOf("v0.9.14") < notes.IndexOf("v0.9.13") && notes.IndexOf("v0.9.13") < notes.IndexOf("v0.9.12") && notes.IndexOf("v0.9.12") < notes.IndexOf("v0.9.11") && notes.IndexOf("v0.9.11") < notes.IndexOf("v0.9.8"), "newer notes come first");
                 check(notes.IndexOf("PR #", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("RuneApps", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("Jagex", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("Alt1", StringComparison.OrdinalIgnoreCase) < 0, "notes stay in player-facing language");
                 check(ReleaseNotes.IsNewer("", "v0.9.12") && ReleaseNotes.IsNewer(null, "v0.9.12") && ReleaseNotes.IsNewer("v0.9.11", "v0.9.12"), "a missing or older dismissal shows the notes");
                 check(!ReleaseNotes.IsNewer("v0.9.12", "v0.9.12") && !ReleaseNotes.IsNewer("0.9.12", "v0.9.12") && !ReleaseNotes.IsNewer("v0.9.13", "v0.9.12"), "the current or a newer dismissal stays hidden");
@@ -48,7 +48,7 @@ namespace KavrosClueHelper
                     int gap = banner.Top - card.Bottom;
                     check(banner.Visible && heading.Text == "What's new" && heading.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the settings banner has a gold What's new header");
                     check(dismiss.Text == "Got it" && dismiss.Right <= banner.Width && heading.Left < dismiss.Left, "Got it sits on the right of the settings header");
-                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.13"), "the settings changelog scrolls");
+                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.14"), "the settings changelog scrolls");
                     check(!card.IsEmpty && gap >= 12 && gap <= 16, "the banner sits " + gap + " px below the CLIENT card");
                     check(!banner.Bounds.IntersectsWith(card), "the banner does not cover the CLIENT card");
                     MainSurface surface = settings.Controls.OfType<MainSurface>().Single();
@@ -64,7 +64,19 @@ namespace KavrosClueHelper
                     Label credit = (Label)settings.Controls.Find("BuildCredit", true)[0];
                     check(banner.Bottom <= credit.Top - WhatsNewLayout.Bottom && credit.Bottom <= client.Height, "the settings footer stays below the banner");
                     check(settings.ClientSize.Height > closedHeight, "the settings window grows to hold the banner");
+                    Control modern = settings.Controls.Find("ModernInterface", true)[0];
+                    Control darkscape = settings.Controls.Find("DarkscapeInterface", true)[0];
+                    Control legacy = settings.Controls.Find("LegacyInterface", true)[0];
+                    Rectangle modernBox = ChildOnForm(modern);
+                    Rectangle darkBox = ChildOnForm(darkscape);
+                    Rectangle legacyBox = ChildOnForm(legacy);
+                    check(modern.Text == "Modern" && darkscape.Text == "DarkScape" && legacy.Text == "Legacy", "the client card has Modern, DarkScape and Legacy");
+                    check(modern.Top == darkscape.Top && darkscape.Top == legacy.Top && modern.Height == darkscape.Height && darkscape.Height == legacy.Height, "the three interface buttons share one row");
+                    check(modern.Right <= darkscape.Left && darkscape.Right <= legacy.Left && !modernBox.IntersectsWith(darkBox) && !darkBox.IntersectsWith(legacyBox), "the interface buttons do not overlap");
+                    check(card.Contains(modernBox) && card.Contains(darkBox) && card.Contains(legacyBox), "the three buttons sit inside the CLIENT card");
+                    check(!banner.Bounds.IntersectsWith(modernBox) && !banner.Bounds.IntersectsWith(darkBox) && !banner.Bounds.IntersectsWith(legacyBox), "What's new does not cover the interface buttons");
                     Save(settings, "/opt/cursor/artifacts/settings-whats-new-fixed.png");
+                    Save(settings, "/opt/cursor/artifacts/settings-client-modes.png");
                     settings.DismissReleaseNotes();
                     check(!banner.Visible && settings.ClientSize.Height == closedHeight, "Got it on settings restores the window");
                 }
@@ -121,6 +133,35 @@ namespace KavrosClueHelper
                     check(controls.Bottom <= buttons.Top && buttons.Bottom <= scan.ClientSize.Height, "scan controls and buttons stack inside the panel");
                     SaveScreen(scan, "/opt/cursor/artifacts/floating-scan-note.png");
                 }
+                string offerFile = Path.Combine(dir, "offer.txt");
+                File.WriteAllText(offerFile, "seen-notes\t" + AppBranding.DisplayVersion + "\r\n");
+                using (FloatingCluePanel offer = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(offerFile)))
+                {
+                    offer.SetWaiting("Open a clue or puzzle in Kavros.");
+                    ShowAt(offer, new Point(40, 40));
+                    int before = offer.Activations;
+                    offer.OfferUpdate("v0.9.15");
+                    Application.DoEvents();
+                    check(offer.Activations == before, "showing the update bar does not activate the panel");
+                    check((offer.CreateParamsStyle() & Native.ExNoActivate) != 0, "the update bar stays on a window that does not take focus");
+                    Panel update = (Panel)offer.Controls["UpdateOffer"];
+                    Label updateText = (Label)update.Controls["UpdateOfferText"];
+                    Control updateButton = update.Controls["UpdateOfferButton"];
+                    Control updateDismiss = update.Controls["UpdateOfferDismiss"];
+                    Rectangle client = offer.ClientRectangle;
+                    Rectangle text = new Rectangle(update.Left + updateText.Left, update.Top + updateText.Top, updateText.Width, updateText.Height);
+                    Rectangle button = new Rectangle(update.Left + updateButton.Left, update.Top + updateButton.Top, updateButton.Width, updateButton.Height);
+                    Rectangle dismiss = new Rectangle(update.Left + updateDismiss.Left, update.Top + updateDismiss.Top, updateDismiss.Width, updateDismiss.Height);
+                    check(update.Visible && updateText.Text == "Update v0.9.15 available" && updateText.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the update bar names the new version in gold");
+                    check(updateButton.Text == "Update" && updateDismiss.Text == "\u00d7", "the update bar has an Update button and a dismiss mark");
+                    check(client.Contains(update.Bounds) && client.Contains(text) && client.Contains(button) && client.Contains(dismiss), "the update bar sits inside the clue panel");
+                    check(!text.IntersectsWith(button) && !button.IntersectsWith(dismiss) && text.Right <= button.Left && button.Right <= dismiss.Left, "the update text, button and dismiss mark do not overlap");
+                    Panel offerNotes = (Panel)offer.Controls["WhatsNewBanner"];
+                    check(offerNotes == null || !offerNotes.Visible || !offerNotes.Bounds.IntersectsWith(update.Bounds), "the update bar does not cover What's new");
+                    SaveScreen(offer, "/opt/cursor/artifacts/floating-update-banner.png");
+                    offer.DismissUpdateOffer();
+                    check(!update.Visible, "dismissing the update bar removes it");
+                }
                 using (FloatingCluePanel both = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(Path.Combine(dir, "scan-notes.txt"))))
                 {
                     both.SetPuzzle(new DetectedPuzzle { Kind = PuzzleKind.Scan, Scan = new ScanReading { Region = prif } }, "");
@@ -153,6 +194,28 @@ namespace KavrosClueHelper
             check(client.Height - text.Bottom >= WhatsNewLayout.PanelBottom, mode + " notes clear the bottom edge");
             check(body.Right <= banner.Width - WhatsNewLayout.Pad && body.Bottom <= banner.Height - WhatsNewLayout.Pad, mode + " scrollbar stays inside the banner");
             check(buttons.Bottom < banner.Top, mode + " button row stays above What's new");
+        }
+        static int CreateParamsStyle(this Form form)
+        {
+            PropertyInfo property = typeof(Control).GetProperty("CreateParams", BindingFlags.Instance | BindingFlags.NonPublic);
+            CreateParams parameters = (CreateParams)property.GetValue(form, null);
+            return parameters.ExStyle;
+        }
+        static Rectangle ChildOnForm(Control child)
+        {
+            int x = child.Left;
+            int y = child.Top;
+            Control walk = child.Parent;
+            Form form = child.FindForm();
+            while (walk != null && walk != form)
+            {
+                ScrollableControl scrolled = walk as ScrollableControl;
+                if (scrolled != null) y += scrolled.AutoScrollPosition.Y;
+                x += walk.Left;
+                y += walk.Top;
+                walk = walk.Parent;
+            }
+            return new Rectangle(x, y, child.Width, child.Height);
         }
         static Rectangle ClientCard(Form form)
         {

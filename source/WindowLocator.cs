@@ -39,15 +39,31 @@ namespace KavrosClueHelper
             if (Contains(window.ClassName, "CabinetWClass") || Contains(window.ClassName, "WinRarWindow") || Contains(window.ClassName, "Chrome_WidgetWin") || Contains(window.ClassName, "ApplicationFrameWindow")) return -1000;
             if (IsLauncher(window)) return -1000;
             // Title must contain Kavros. A rev number such as 944 or 951 is not required,
-            // and another server's rs2client window is not a match.
+            // and another server's rs2client window is not a match. The title alone is
+            // not enough: Notepad++, a browser, Explorer or a terminal can have Kavros
+            // in the caption. The process or the window class has to be the client.
             bool titleMatch = Contains(window.Title, "kavros");
             if (!titleMatch) return -1000;
+            if (!IsGameClient(window)) return -1000;
             int score = 400;
             if (Contains(window.ProcessName, "kavros")) score += 80;
             if (Contains(window.ClassName, "jag") || Contains(window.ClassName, "glfw") || Contains(window.ClassName, "lwjgl")) score += 70;
             if (window.Client.Width >= 600 && window.Client.Height >= 350) score += 40;
             if (window.Client.Width < 250 || window.Client.Height < 150) score -= 250;
             return score;
+        }
+        // rs2client / JagWindow, a GLFW or LWJGL client, or a Kavros-named client process.
+        // The launcher and this helper are not clients. An editor or browser is not one either.
+        static bool IsGameClient(GameWindow window)
+        {
+            if (window == null) return false;
+            if (Contains(window.ClassName, "jag") || Contains(window.ClassName, "glfw") || Contains(window.ClassName, "lwjgl"))
+                return true;
+            string process = ProcessBaseName(window.ProcessName);
+            if (EqualsName(process, "rs2client")) return true;
+            if (Contains(process, "kavros") && !Contains(process, "launcher") && !IsHelperProcess(process))
+                return true;
+            return false;
         }
         // The same bar auto-selection uses. Helpers, launchers, browsers and other apps stay below it.
         public static bool IsClient(GameWindow window)
