@@ -36,33 +36,72 @@ namespace KavrosClueHelper
             if (IsHelperProcess(window.ProcessName) || Contains(window.Title, "Kavros Clue Helper")) return -1000;
             if (Contains(window.Title, "AFK Warden") || Contains(window.Title, "Slayer Helper")) return -1000;
             if (Contains(window.Title, "Companion") && (Contains(window.Title, "Kavros") || Contains(window.ProcessName, "Kavros"))) return -1000;
-            if (Contains(window.ClassName, "CabinetWClass") || Contains(window.ClassName, "WinRarWindow") || Contains(window.ClassName, "Chrome_WidgetWin") || Contains(window.ClassName, "ApplicationFrameWindow")) return -1000;
             if (IsLauncher(window)) return -1000;
             // Title must contain Kavros. A rev number such as 944 or 951 is not required,
-            // and another server's rs2client window is not a match. The title alone is
-            // not enough: Notepad++, a browser, Explorer or a terminal can have Kavros
-            // in the caption. The process or the window class has to be the client.
+            // and another server's rs2client window is not a match. Editors, browsers and
+            // other programs are refused by name, class or title suffix. A real client
+            // with an unfamiliar class, or an empty process name from an elevated window,
+            // still matches.
             bool titleMatch = Contains(window.Title, "kavros");
             if (!titleMatch) return -1000;
-            if (!IsGameClient(window)) return -1000;
+            if (IsNonGame(window)) return -1000;
             int score = 400;
-            if (Contains(window.ProcessName, "kavros")) score += 80;
+            string process = ProcessBaseName(window.ProcessName);
+            if (Contains(process, "kavros")) score += 80;
+            if (EqualsName(process, "rs2client")) score += 80;
             if (Contains(window.ClassName, "jag") || Contains(window.ClassName, "glfw") || Contains(window.ClassName, "lwjgl")) score += 70;
             if (window.Client.Width >= 600 && window.Client.Height >= 350) score += 40;
             if (window.Client.Width < 250 || window.Client.Height < 150) score -= 250;
             return score;
         }
-        // rs2client / JagWindow, a GLFW or LWJGL client, or a Kavros-named client process.
-        // The launcher and this helper are not clients. An editor or browser is not one either.
-        static bool IsGameClient(GameWindow window)
+        static readonly string[] DeniedProcesses = {
+            "notepad++", "notepad", "wordpad", "code", "devenv", "sublime_text", "atom", "idea64", "rider64", "cursor",
+            "chrome", "msedge", "firefox", "brave", "opera", "vivaldi", "waterfox", "librewolf",
+            "windowsterminal", "wt", "cmd", "powershell", "pwsh", "conhost", "mintty", "alacritty", "wezterm-gui",
+            "explorer", "winrar", "7zfm", "discord", "slack", "teams", "ms-teams", "obs64", "steam", "winword", "excel", "powerpnt"
+        };
+        static readonly string[] DeniedTitleSuffixes = {
+            " - Notepad++", " - Notepad", " - WordPad", " - Visual Studio Code", " - Visual Studio", " - Sublime Text",
+            " - Google Chrome", " - Mozilla Firefox", " - Microsoft Edge", " - Brave", " - Opera", " - Vivaldi",
+            " - Windows Terminal", " - Discord", " - Slack", " - Microsoft Teams"
+        };
+        // Editors, browsers, terminals and other desktop apps. An empty process name
+        // is not enough to refuse a window: elevation hides it, so the title suffix
+        // and the window class cover that case.
+        static bool IsNonGame(GameWindow window)
         {
-            if (window == null) return false;
-            if (Contains(window.ClassName, "jag") || Contains(window.ClassName, "glfw") || Contains(window.ClassName, "lwjgl"))
-                return true;
-            string process = ProcessBaseName(window.ProcessName);
-            if (EqualsName(process, "rs2client")) return true;
-            if (Contains(process, "kavros") && !Contains(process, "launcher") && !IsHelperProcess(process))
-                return true;
+            if (window == null) return true;
+            if (DeniedClass(window.ClassName)) return true;
+            if (DeniedProcess(window.ProcessName)) return true;
+            if (DeniedTitle(window.Title)) return true;
+            return false;
+        }
+        static bool DeniedClass(string className)
+        {
+            if (string.IsNullOrEmpty(className)) return false;
+            if (Contains(className, "Notepad")) return true;
+            if (Contains(className, "Chrome_WidgetWin")) return true;
+            if (Contains(className, "MozillaWindowClass")) return true;
+            if (Contains(className, "ApplicationFrameWindow")) return true;
+            if (Contains(className, "CASCADIA_HOSTING_WINDOW_CLASS")) return true;
+            if (Contains(className, "ConsoleWindowClass")) return true;
+            if (Contains(className, "CabinetWClass")) return true;
+            if (Contains(className, "WinRarWindow")) return true;
+            return false;
+        }
+        static bool DeniedProcess(string processName)
+        {
+            string name = ProcessBaseName(processName);
+            if (name.Length == 0) return false;
+            for (int i = 0; i < DeniedProcesses.Length; i++)
+                if (EqualsName(name, DeniedProcesses[i])) return true;
+            return false;
+        }
+        static bool DeniedTitle(string title)
+        {
+            if (string.IsNullOrEmpty(title)) return false;
+            for (int i = 0; i < DeniedTitleSuffixes.Length; i++)
+                if (title.EndsWith(DeniedTitleSuffixes[i], StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
         // The same bar auto-selection uses. Helpers, launchers, browsers and other apps stay below it.
