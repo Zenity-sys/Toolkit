@@ -1,5 +1,10 @@
 # Kavros Clue Helper
 
+## 0.9.15
+
+**Puzzles**
+- Auto capture finds the Kavros client again, including when Windows hides the process name. Notepad, browsers, and other programs are still skipped when Kavros is only in the window title.
+
 ## 0.9.14
 
 **Puzzles**

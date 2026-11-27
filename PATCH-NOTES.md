@@ -1,3 +1,9 @@
+# Kavros Clue Helper v0.9.15
+
+Auto capture finds the Kavros client again, including when Windows hides the process name. Notepad, browsers, and other programs are still skipped when Kavros is only in the title.
+
+Settings shows **Made by Zenity  ·  v0.9.15**. The full notes are in CHANGELOG.md.
+
 # Kavros Clue Helper v0.9.14
 
 DarkScape lockboxes and treasure maps are read when DarkScape is selected in Settings. Settings has separate Modern, DarkScape, and Legacy buttons. When an update is ready, the clue panel shows it without taking focus from Kavros. Auto capture stays on the game client, so Notepad and other programs are not picked up just because the title mentions Kavros.
