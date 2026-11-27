@@ -309,7 +309,7 @@ namespace KavrosClueHelper
         {
             assets=directory;session=compass;prefs=preferences;
             FormClosing+=delegate(object sender,FormClosingEventArgs e){if(e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();}};
-            FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=false;TopMost=true;DoubleBuffered=true;AutoScaleMode=AutoScaleMode.None;
+            FormBorderStyle=FormBorderStyle.None;ShowInTaskbar=false;DoubleBuffered=true;AutoScaleMode=AutoScaleMode.None;
             SetStyle(ControlStyles.UserPaint|ControlStyles.Opaque|ControlStyles.ResizeRedraw|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);
             ClientSize=new Size(400,140);BackColor=KavrosTheme.Bg;ForeColor=KavrosTheme.Text;Font=KavrosTheme.Ui(9F,false);
             title.SetBounds(0,0,294,32);title.TextAlign=ContentAlignment.MiddleLeft;title.Padding=new Padding(10,0,0,0);title.Font=new Font(Font,FontStyle.Bold);title.BackColor=KavrosTheme.BgRaise;title.AutoEllipsis=true;Controls.Add(title);
@@ -335,6 +335,11 @@ namespace KavrosClueHelper
             meerkat.Width=210;scanFloor.SetBounds(220,25,155,24);scanFloor.DropDownStyle=ComboBoxStyle.DropDownList;scanFloor.BackColor=KavrosTheme.Input;scanFloor.ForeColor=KavrosTheme.Text;scanFloor.FlatStyle=FlatStyle.Flat;scanFloor.Visible=false;scanControls.Controls.Add(scanFloor);scanFloor.BringToFront();
             scanFloor.SelectedIndexChanged+=delegate{if(changingFloor||scanSession.Region==null||scanFloor.SelectedIndex<0)return;scanSession.Region.Level=scanSession.Region.Levels[scanFloor.SelectedIndex];scanSession.SetAutomatic(autoFollow.Checked);RefreshScan();};
             LabelAt(scanControls,"Green box: scan range | Dashed: double range",0,54,380,30);
+            Label scanNote=new Label{Name="ScanTrackingNote",AutoSize=false,ForeColor=KavrosTheme.TextFaint,BackColor=KavrosTheme.Bg,Font=KavrosTheme.Ui(8F,false),Text="Live scan tracking is experimental and can be finicky — click spots on the map to cross them off manually."};
+            Size noteSize=TextRenderer.MeasureText(scanNote.Text,scanNote.Font,new Size(368,0),TextFormatFlags.WordBreak);
+            scanNote.SetBounds(0,90,380,Math.Max(32,noteSize.Height+4));
+            scanControls.Controls.Add(scanNote);
+            scanControls.Height=scanNote.Bottom+8;
             compassControls.SetBounds(10,391,380,121);Controls.Add(compassControls);
             positions.SetBounds(0,0,304,26);positions.DropDownStyle=ComboBoxStyle.DropDown;
             positions.AutoCompleteMode=AutoCompleteMode.SuggestAppend;positions.AutoCompleteSource=AutoCompleteSource.ListItems;
@@ -398,8 +403,16 @@ namespace KavrosClueHelper
             dismiss.SetBounds(width - 80, 4, 72, WhatsNewLayout.Header - 8);
             Rectangle body = WhatsNewLayout.Body(notesHost.Bounds);
             notesBody.SetBounds(body.X, body.Y, body.Width, body.Height);
-            notesBody.SelectionStart = 0;
-            notesBody.SelectionLength = 0;
+            if (notesBody.Focused)
+            {
+                notesBody.SelectionStart = 0;
+                notesBody.SelectionLength = 0;
+            }
+        }
+        internal void ShowWithoutFocus()
+        {
+            if (Visible || IsDisposed) return;
+            if (!Native.ShowFormNoActivate(this)) Show();
         }
         internal void DismissReleaseNotes()
         {
@@ -574,7 +587,23 @@ namespace KavrosClueHelper
             Invalidate(true);
         }
         protected override bool ShowWithoutActivation{get{return true;}}
-        protected override CreateParams CreateParams{get{CreateParams p=base.CreateParams;p.ExStyle|=0x80;return p;}}
+        internal bool StaysInactive{get{return ShowWithoutActivation;}}
+        internal int Activations;
+        protected override void OnActivated(EventArgs e){Activations++;base.OnActivated(e);}
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            try{Native.SetTopMostNoActivate(Handle,true);}
+            catch(DllNotFoundException){}
+            catch(EntryPointNotFoundException){}
+        }
+        // A click still reaches the button or the map. It must not pull Kavros out of the foreground.
+        protected override void WndProc(ref Message m)
+        {
+            if(m.Msg==0x21){base.WndProc(ref m);m.Result=new IntPtr(3);return;}
+            base.WndProc(ref m);
+        }
+        protected override CreateParams CreateParams{get{CreateParams p=base.CreateParams;p.ExStyle|=Native.ExToolWindow|Native.ExNoActivate;return p;}}
         protected override void OnPaintBackground(PaintEventArgs e){using(Brush fill=new SolidBrush(BackColor))e.Graphics.FillRectangle(fill,ClientRectangle);}
         protected override void OnPaint(PaintEventArgs e)
         {

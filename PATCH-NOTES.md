@@ -1,3 +1,9 @@
+# Kavros Clue Helper v0.9.13
+
+Finding a puzzle or a scan no longer takes focus away from Kavros. The first lockbox on a large window shows up sooner. Scan clues note that live tracking can be finicky, and you can click spots on the map to cross them off. The Prifddinas scan lists ;;prif as the fastest way there.
+
+Settings shows **Made by Zenity  ·  v0.9.13**. The full notes are in CHANGELOG.md.
+
 # Kavros Clue Helper v0.9.12
 
 What's new stays on the clue panel until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.

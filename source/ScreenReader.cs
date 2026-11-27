@@ -121,12 +121,27 @@ namespace KavrosClueHelper
         [DllImport("user32.dll", EntryPoint = "SetWindowLong")] static extern int SetWindowLong32(IntPtr window, int index, int value);
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")] static extern IntPtr SetWindowLongPtr64(IntPtr window, int index, IntPtr value);
         public const int SwpNoSize=0x0001,SwpNoMove=0x0002,SwpNoZOrder=0x0004,SwpNoActivate=0x0010,SwpNoOwnerZOrder=0x0200;
+        public const int SwShowNoActivate=4,ExNoActivate=0x08000000,ExToolWindow=0x80;
         public static readonly IntPtr HwndTopMost=new IntPtr(-1),HwndNoTopMost=new IntPtr(-2);
         // Reasserting topmost must not activate the panel. Activation every tick steals the game's mouse.
         public static int TopMostFlags { get { return SwpNoSize|SwpNoMove|SwpNoActivate|SwpNoOwnerZOrder; } }
+        public static int PlaceFlags { get { return SwpNoZOrder|SwpNoActivate|SwpNoOwnerZOrder; } }
+        internal static int LastShowCommand;
         [DllImport("user32.dll", EntryPoint="GetWindowLong")] static extern int GetWindowLong32(IntPtr window, int index);
         [DllImport("user32.dll", EntryPoint="GetWindowLongPtr")] static extern IntPtr GetWindowLongPtr64(IntPtr window, int index);
         [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr window, IntPtr insertAfter, int x, int y, int width, int height, int flags);
+        [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
+        // Show a helper surface without making it the foreground window.
+        // SW_SHOWNOACTIVATE is the only show command this path uses.
+        public static bool ShowFormNoActivate(System.Windows.Forms.Form form)
+        {
+            if (form == null || form.IsDisposed) return false;
+            LastShowCommand = SwShowNoActivate;
+            if (!form.IsHandleCreated) form.CreateControl();
+            try { return ShowWindow(form.Handle, SwShowNoActivate); }
+            catch (DllNotFoundException) { return false; }
+            catch (EntryPointNotFoundException) { return false; }
+        }
         public static void SetOwner(IntPtr child, IntPtr owner)
         {
             if (child == IntPtr.Zero) return;
@@ -139,7 +154,7 @@ namespace KavrosClueHelper
         public static void PlaceNoZOrder(IntPtr window, Rectangle screen)
         {
             if (window == IntPtr.Zero || screen.Width < 1 || screen.Height < 1) return;
-            SetWindowPos(window, IntPtr.Zero, screen.X, screen.Y, screen.Width, screen.Height, SwpNoZOrder | SwpNoActivate | SwpNoOwnerZOrder);
+            SetWindowPos(window, IntPtr.Zero, screen.X, screen.Y, screen.Width, screen.Height, PlaceFlags);
         }
         public static void SetTopMostNoActivate(IntPtr window, bool top)
         {

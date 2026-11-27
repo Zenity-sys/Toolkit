@@ -81,7 +81,7 @@ namespace KavrosClueHelper
             noticeSize = new Size(width, 34);
             ClientSize = noticeSize;
             MoveClear(game, blocked);
-            if (!Visible) Show();
+            if (!Visible && !Native.ShowFormNoActivate(this)) Show();
             timer.Stop();
             if (!sticky) { timer.Interval = 4000; timer.Start(); }
         }

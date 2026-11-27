@@ -1299,8 +1299,24 @@ namespace KavrosClueHelper
             float[] order = SearchOrder(ProfileHeight(image.Height), activeDpi, resolutionChoice, scalingChoice, resolutionManual, scalingManual);
             return FindLockboxGrid(image, pixels, order, budgetMs, false);
         }
+        // At 100% DPI the lockbox icons match the scale-1 templates even on a
+        // 1440p window. The interface order tries 1.25 first, and that full-window
+        // pass was using the whole first slice before scale 1 started.
+        internal static float[] LockboxScaleOrder(float[] order, int dpi)
+        {
+            if (order == null || order.Length == 0 || dpi > 96) return order;
+            int at = -1;
+            for (int i = 0; i < order.Length; i++) if (Math.Abs(order[i] - 1F) < 0.001F) { at = i; break; }
+            if (at <= 0) return order;
+            float[] next = new float[order.Length];
+            next[0] = order[at];
+            int n = 1;
+            for (int i = 0; i < order.Length; i++) if (i != at) next[n++] = order[i];
+            return next;
+        }
         private DetectedPuzzle FindLockboxGrid(Bitmap image,Pixels pixels,float[] order,int budgetMs,bool complete)
         {
+            order = LockboxScaleOrder(order, activeDpi);
             Rectangle all=new Rectangle(Point.Empty,image.Size);
             var clock=System.Diagnostics.Stopwatch.StartNew();
             int start=complete?0:lockScaleCursor;
