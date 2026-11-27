@@ -28,7 +28,10 @@ namespace KavrosClueHelper
         }
         internal static string Text()
         {
-            return "v0.9.12\r\n"
+            return "v0.9.13\r\n"
+                + "Finding a puzzle or a scan no longer takes focus away from Kavros. The first lockbox on a large window shows up sooner. Scan clues note that live tracking can be finicky, and you can click spots on the map to cross them off. The Prifddinas scan lists ;;prif as the fastest way there.\r\n"
+                + "\r\n"
+                + "v0.9.12\r\n"
                 + "What's new stays on the clue panel until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.\r\n"
                 + "\r\n"
                 + "v0.9.11\r\n"

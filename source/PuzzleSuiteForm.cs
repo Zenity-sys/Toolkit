@@ -23,15 +23,24 @@ namespace KavrosClueHelper
         public Rectangle PlacedRectangle { get { return placed; } }
         public GuidanceOverlay()
         {
-            FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false; TopMost = true;
+            FormBorderStyle = FormBorderStyle.None; ShowInTaskbar = false;
             BackColor = Color.Fuchsia; TransparencyKey = Color.Fuchsia; DoubleBuffered = true; AutoScaleMode = AutoScaleMode.None;
             // Paint each frame off screen in one pass so the marks never flash.
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
         }
         protected override bool ShowWithoutActivation { get { return true; } }
-        protected override CreateParams CreateParams { get { CreateParams p = base.CreateParams; p.ExStyle |= 0x00080000 | 0x00000020 | 0x08000000 | 0x80; return p; } }
+        internal bool StaysInactive { get { return ShowWithoutActivation; } }
+        internal int Activations;
+        protected override void OnActivated(EventArgs e) { Activations++; base.OnActivated(e); }
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            try { Native.SetTopMostNoActivate(Handle, true); }
+            catch (DllNotFoundException) { }
+            catch (EntryPointNotFoundException) { }
+        }
+        protected override CreateParams CreateParams { get { CreateParams p = base.CreateParams; p.ExStyle |= 0x00080000 | 0x00000020 | Native.ExNoActivate | Native.ExToolWindow; return p; } }
         protected override void WndProc(ref Message m) { if (m.Msg == 0x84) { m.Result = new IntPtr(-1); return; } base.WndProc(ref m); }
-        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); }
         public void UpdateGuidance(Rectangle bounds, List<GuidanceMark> next)
         {
             bool show,hide,move,paint; Rectangle nextPlaced; bool nextKnown;
@@ -40,7 +49,7 @@ namespace KavrosClueHelper
             if(paint) marks=next;
             // Show before placing. Creating the handle scales Form.Bounds, so the
             // physical rectangle is applied afterwards and only when it changes.
-            if(show) Show();
+            if (show && !Native.ShowFormNoActivate(this)) Show();
             if((move||show) && bounds.Width>0 && bounds.Height>0)
             {
                 if(!IsHandleCreated) CreateControl();
@@ -457,7 +466,7 @@ namespace KavrosClueHelper
             Rectangle desktop=exists?Screen.FromRectangle(game).WorkingArea:Screen.PrimaryScreen.WorkingArea;
             Rectangle placement=FloatingPanelLayout.Place(game,floatingPanel.Size,preferences.Offset,desktop);
             if(!floatingPanel.IsDragging&&floatingPanel.Bounds!=placement)floatingPanel.Bounds=placement;
-            if(!floatingPanel.Visible)floatingPanel.Show();
+            if(!floatingPanel.Visible)floatingPanel.ShowWithoutFocus();
             KeepSurfacesOnTop(exists,minimised,foreground||panelFront);
         }
         private string ClientLabel()

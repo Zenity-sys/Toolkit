@@ -24,6 +24,11 @@ namespace KavrosClueHelper
             {
                 Action<bool, string> check = delegate(bool ok, string msg) { count++; if (!ok) throw new Exception(msg); };
                 Clicks(check);
+                float[] uiOrder = PuzzleDetector.SearchOrder(1369, 96);
+                float[] lockOrder = PuzzleDetector.LockboxScaleOrder(uiOrder, 96);
+                check(Math.Abs(uiOrder[0] - 1.25F) < 0.02F && Math.Abs(lockOrder[0] - 1F) < 0.02F, "a 100% DPI lockbox tries scale 1 before the 1.25 interface scale");
+                float[] scaled = PuzzleDetector.LockboxScaleOrder(PuzzleDetector.SearchOrder(1369, 120), 120);
+                check(Math.Abs(scaled[0] - PuzzleDetector.SearchOrder(1369, 120)[0]) < 0.02F, "a scaled display keeps the interface scale first for lockboxes");
                 string assets = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets");
                 string shot = Path.Combine(assets, "test_assets", "lockbox", "modern-1440.png");
                 check(File.Exists(shot), "the 1440p lockbox capture is in the test assets");
@@ -44,7 +49,7 @@ namespace KavrosClueHelper
                         times += (times.Length == 0 ? "" : ",") + elapsed;
                         check(elapsed < 700, "live lockbox tick " + ticks + " took " + elapsed + " ms");
                     }
-                    check(ticks <= 3 && found != null && found.Kind == PuzzleKind.Lockbox, "live polling finds the 1440p lockbox in " + ticks + " ticks (" + times + " ms)");
+                    check(ticks == 1 && found != null && found.Kind == PuzzleKind.Lockbox, "the first 2560x1369 look finds the lockbox (" + times + " ms)");
                     check(found != null && found.Board != null && found.Board.SequenceEqual(Modern1440), "live polling reads all 25 symbols " + Board(found));
                     check(found != null && found.Confidence >= 0.90, "the 1440p read is confident enough to show");
                     var engine = new PuzzleAnalysisEngine(assets);

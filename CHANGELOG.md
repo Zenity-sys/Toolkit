@@ -1,5 +1,13 @@
 # Kavros Clue Helper
 
+## 0.9.13
+
+**Puzzles**
+- Finding a puzzle or a scan no longer takes focus away from Kavros.
+- The first lockbox on a large window shows up sooner.
+- Scan clues note that live tracking can be finicky, and you can click spots on the map to cross them off.
+- The Prifddinas scan lists ;;prif as the fastest way there.
+
 ## 0.9.12
 
 **Puzzles**

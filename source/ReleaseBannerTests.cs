@@ -16,8 +16,8 @@ namespace KavrosClueHelper
             {
                 Action<bool, string> check = delegate(bool ok, string msg) { count++; if (!ok) throw new Exception(msg); };
                 string notes = ReleaseNotes.Text();
-                check(notes.Contains("v0.9.12") && notes.Contains("v0.9.11") && notes.Contains("v0.9.10") && notes.Contains("v0.9.9") && notes.Contains("v0.9.8"), "notes list the current version and the recent ones");
-                check(notes.IndexOf("v0.9.12") < notes.IndexOf("v0.9.11") && notes.IndexOf("v0.9.11") < notes.IndexOf("v0.9.8"), "newer notes come first");
+                check(notes.Contains("v0.9.13") && notes.Contains("v0.9.12") && notes.Contains("v0.9.11") && notes.Contains("v0.9.10") && notes.Contains("v0.9.9") && notes.Contains("v0.9.8"), "notes list the current version and the recent ones");
+                check(notes.IndexOf("v0.9.13") < notes.IndexOf("v0.9.12") && notes.IndexOf("v0.9.12") < notes.IndexOf("v0.9.11") && notes.IndexOf("v0.9.11") < notes.IndexOf("v0.9.8"), "newer notes come first");
                 check(notes.IndexOf("PR #", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("RuneApps", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("Jagex", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("Alt1", StringComparison.OrdinalIgnoreCase) < 0, "notes stay in player-facing language");
                 check(ReleaseNotes.IsNewer("", "v0.9.12") && ReleaseNotes.IsNewer(null, "v0.9.12") && ReleaseNotes.IsNewer("v0.9.11", "v0.9.12"), "a missing or older dismissal shows the notes");
                 check(!ReleaseNotes.IsNewer("v0.9.12", "v0.9.12") && !ReleaseNotes.IsNewer("0.9.12", "v0.9.12") && !ReleaseNotes.IsNewer("v0.9.13", "v0.9.12"), "the current or a newer dismissal stays hidden");
@@ -48,7 +48,7 @@ namespace KavrosClueHelper
                     int gap = banner.Top - card.Bottom;
                     check(banner.Visible && heading.Text == "What's new" && heading.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the settings banner has a gold What's new header");
                     check(dismiss.Text == "Got it" && dismiss.Right <= banner.Width && heading.Left < dismiss.Left, "Got it sits on the right of the settings header");
-                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.12"), "the settings changelog scrolls");
+                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.13"), "the settings changelog scrolls");
                     check(!card.IsEmpty && gap >= 12 && gap <= 16, "the banner sits " + gap + " px below the CLIENT card");
                     check(!banner.Bounds.IntersectsWith(card), "the banner does not cover the CLIENT card");
                     MainSurface surface = settings.Controls.OfType<MainSurface>().Single();
@@ -102,6 +102,37 @@ namespace KavrosClueHelper
                     using (FloatingCluePanel again = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(panelFile)))
                         check(!again.ReleaseNotesOpen && again.Height == 140, "the saved version keeps the clue panel notes hidden");
                 }
+                ScanRegion prif = new ScanVision(assets).Regions.Single(r => r.Id == 368);
+                using (FloatingCluePanel scan = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(seen)))
+                {
+                    scan.SetPuzzle(new DetectedPuzzle { Kind = PuzzleKind.Scan, Scan = new ScanReading { Region = prif } }, "");
+                    ShowAt(scan, new Point(40, 40));
+                    Panel controls = ScanControls(scan);
+                    Label note = (Label)controls.Controls["ScanTrackingNote"];
+                    Panel buttons = Footer(scan);
+                    Control map = ScanMapOf(scan);
+                    Rectangle noteBounds = new Rectangle(controls.Left + note.Left, controls.Top + note.Top, note.Width, note.Height);
+                    Size measured = TextRenderer.MeasureText(note.Text, note.Font, new Size(Math.Max(1, note.Width - 4), 0), TextFormatFlags.WordBreak);
+                    check(note.Visible && note.ForeColor.ToArgb() == KavrosTheme.TextFaint.ToArgb(), "the scan note is dim");
+                    check(note.Text.IndexOf("click spots on the map") >= 0 && prif.Route.StartsWith("Fastest: ;;prif"), "the scan note and the Prifddinas route are both shown");
+                    check(scan.ClientRectangle.Contains(noteBounds), "the scan note sits inside the panel");
+                    check(note.Height >= measured.Height && note.Width >= 360, "the scan note is not truncated (" + note.Height + " vs " + measured.Height + ")");
+                    check(map != null && !noteBounds.IntersectsWith(map.Bounds) && !noteBounds.IntersectsWith(buttons.Bounds), "the scan note stays clear of the map and the buttons");
+                    check(controls.Bottom <= buttons.Top && buttons.Bottom <= scan.ClientSize.Height, "scan controls and buttons stack inside the panel");
+                    SaveScreen(scan, "/opt/cursor/artifacts/floating-scan-note.png");
+                }
+                using (FloatingCluePanel both = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(Path.Combine(dir, "scan-notes.txt"))))
+                {
+                    both.SetPuzzle(new DetectedPuzzle { Kind = PuzzleKind.Scan, Scan = new ScanReading { Region = prif } }, "");
+                    ShowAt(both, new Point(480, 40));
+                    Panel controls = ScanControls(both);
+                    Label note = (Label)controls.Controls["ScanTrackingNote"];
+                    Panel banner = (Panel)both.Controls["WhatsNewBanner"];
+                    Panel buttons = Footer(both);
+                    Rectangle noteBounds = new Rectangle(controls.Left + note.Left, controls.Top + note.Top, note.Width, note.Height);
+                    check(both.ReleaseNotesOpen && banner.Visible && !noteBounds.IntersectsWith(banner.Bounds) && !noteBounds.IntersectsWith(buttons.Bounds), "the scan note stays clear of What's new");
+                    check(both.ClientRectangle.Contains(noteBounds) && both.ClientRectangle.Contains(banner.Bounds), "the scan note and What's new both fit");
+                }
                 File.AppendAllText(report, "WHAT'S NEW PASS: " + count + " assertions.\r\n");
                 return 0;
             }
@@ -130,6 +161,18 @@ namespace KavrosClueHelper
                 if (card.Label == "CLIENT")
                     return new Rectangle(surface.Left + card.Bounds.X, surface.Top + card.Bounds.Y + surface.AutoScrollPosition.Y, card.Bounds.Width, card.Bounds.Height);
             return Rectangle.Empty;
+        }
+        static Panel ScanControls(Control panel)
+        {
+            foreach (Panel item in panel.Controls.OfType<Panel>())
+                if (item.Controls["ScanTrackingNote"] != null) return item;
+            return null;
+        }
+        static Control ScanMapOf(Control panel)
+        {
+            foreach (Control child in panel.Controls)
+                if (child is ScanMap) return child;
+            return null;
         }
         static Panel Footer(Control panel)
         {
