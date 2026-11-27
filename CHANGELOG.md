@@ -1,5 +1,10 @@
 # Kavros Clue Helper
 
+## 0.9.17
+
+**Puzzles**
+- East of the Ranging Guild is now recognised, including on DarkScape. It was wrongly shown as the river west of the Champions' Guild.
+
 ## 0.9.16
 
 **Puzzles**

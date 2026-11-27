@@ -155,8 +155,9 @@ Pinned source: https://github.com/Leridon/cluetrainer/blob/9fce561ca9ef98c58b67f
 Full notice: assets/data/LICENSE-ClueTrainer.txt. Structured snapshot and
 source metadata: assets/data/clue-catalogue.json. Runtime cards are generated
 by source/import_reference_clues.py.
-The 24 map clue screenshots were retrieved from https://cluetrainer.app/assets/
-on 17 November 2026. Original game/interface art remains Jagex property.
+The 24 baseline map clue screenshots were retrieved from https://cluetrainer.app/assets/
+on 17 November 2026. The East of the Ranging Guild map (id 64) was retrieved
+from the RuneScape Wiki on 27 November 2026. Original game/interface art remains Jagex property.
 Elite display and structure map tiles were retrieved from
 https://runeapps.org/s3/map4/live/topdown-{floor}/1/{x}-{y}.webp and
 https://runeapps.org/s3/map4/live/map-{floor}/1/{x}-{y}.webp on 17 November 2026.

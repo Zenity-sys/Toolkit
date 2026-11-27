@@ -26,24 +26,37 @@ namespace KavrosClueHelper
                     check(framed.Count > 0, "DarkScape finds the brown parchment frame");
                     var reader = new ReferenceClueReader(assets);
                     DetectedPuzzle found = reader.Detect(image, pixels);
-                    check(found != null && found.Master != null && found.Master.Id == 63, "the parchment matches the river west of the Champions' Guild (" + (found == null || found.Master == null ? "none" : found.Master.Id + " " + found.Master.Location) + ") " + (reader.MapScores ?? ""));
+                    check(found != null && found.Master != null && found.Master.Id == 64, "the parchment matches East of the Ranging Guild (" + (found == null || found.Master == null ? "none" : found.Master.Id + " " + found.Master.Location) + ") " + (reader.MapScores ?? ""));
+                    check(found == null || found.Master == null || found.Master.Id != 63, "the DarkScape Ranging Guild map is not the Champions' Guild river");
+                    MasterClue champions = reader.Clues.Single(c => c.Card.Id == 63).Card;
+                    check(champions.Area.X == 3166 && champions.Area.Y == 3360 && champions.Location.IndexOf("Champions' Guild", StringComparison.Ordinal) >= 0, "clue 63 stays the river west of the Champions' Guild");
                     var detector = new PuzzleDetector(assets);
                     detector.UseDarkscape(true);
                     DetectedPuzzle scroll = detector.TryScroll(image, pixels);
-                    check(scroll != null && scroll.Master != null && scroll.Master.Id == 63, "the first DarkScape scroll look reads the map");
+                    check(scroll != null && scroll.Master != null && scroll.Master.Id == 64 && scroll.Master.Id != 63, "the first DarkScape scroll look reads the Ranging Guild map");
                     var engine = new PuzzleAnalysisEngine(assets);
                     engine.UseDarkscape(true);
                     using (AnalysisResult live = engine.Analyze(image, 1027, false, CancellationToken.None, true))
                     {
                         DetectedPuzzle puzzle = live.Plan == null ? null : live.Plan.Puzzle;
-                        check(puzzle != null && puzzle.Master != null && puzzle.Master.Id == 63, "live polling matches the DarkScape map on the first look (" + (puzzle == null || puzzle.Master == null ? "none" : puzzle.Master.Id.ToString()) + ", " + live.Milliseconds + " ms)");
+                        check(puzzle != null && puzzle.Master != null && puzzle.Master.Id == 64 && puzzle.Master.Id != 63, "live polling matches the DarkScape map on the first look (" + (puzzle == null || puzzle.Master == null ? "none" : puzzle.Master.Id.ToString()) + ", " + live.Milliseconds + " ms)");
                         check(live.Milliseconds < 900, "the DarkScape map look stays inside the frame budget (" + live.Milliseconds + " ms)");
                     }
                     var modern = new PuzzleAnalysisEngine(assets);
                     using (AnalysisResult missed = modern.Analyze(image, 1027, false, CancellationToken.None, true))
                     {
                         DetectedPuzzle puzzle = missed.Plan == null ? null : missed.Plan.Puzzle;
-                        check(puzzle == null || puzzle.Master == null || puzzle.Master.Id != 63, "modern mode does not read the brown frame on the first look");
+                        check(puzzle == null || puzzle.Master == null || (puzzle.Master.Id != 63 && puzzle.Master.Id != 64), "modern mode does not read the brown frame on the first look");
+                    }
+                    using (Bitmap official = new Bitmap(Path.Combine(assets, "reference-maps", "64.png")))
+                    {
+                        DetectedPuzzle self = reader.Detect(official, new Pixels(official));
+                        check(self != null && self.Master != null && self.Master.Id == 64, "the official Ranging Guild map matches itself (" + (reader.MapScores ?? "") + ")");
+                    }
+                    using (Bitmap river = new Bitmap(Path.Combine(assets, "reference-maps", "63.png")))
+                    {
+                        DetectedPuzzle riverMatch = reader.Detect(river, new Pixels(river));
+                        check(riverMatch != null && riverMatch.Master != null && riverMatch.Master.Id == 63, "the Champions' Guild river map still matches itself (" + (reader.MapScores ?? "") + ")");
                     }
                 }
                 string slider = Path.Combine(assets, "test_assets", "darkscape", "darkscape-slider-house.png");

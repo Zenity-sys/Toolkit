@@ -1,4 +1,4 @@
-﻿KAVROS CLUE HELPER v0.9.16
+﻿KAVROS CLUE HELPER v0.9.17
 =========================
 
 Close the previous helper with Exit. Extract the WHOLE ZIP into a new folder,
@@ -25,7 +25,7 @@ NEW IN v0.6.0
   support is confirmed; enable it in Settings only if a far tile slides a line.
 - 345 Easy/Medium/Hard clue cards, with local text recognition, NPC/equipment
   details, coordinates and conditional challenge answers.
-- All 24 baseline map clue drawings; 20 Elite scan regions with 524 spots.
+- All 25 map clue drawings; 20 Elite scan regions with 524 spots.
 - Recognised new clues replace old cards automatically; travel directions stay.
 - Minimap recovery after brief misses, camera turns and zoom changes.
 - Persistent knot counts; grey means updating from the last confirmed counts.

@@ -28,7 +28,10 @@ namespace KavrosClueHelper
         }
         internal static string Text()
         {
-            return "v0.9.16\r\n"
+            return "v0.9.17\r\n"
+                + "East of the Ranging Guild is now recognised, including on DarkScape. It was wrongly shown as the Champions' Guild.\r\n"
+                + "\r\n"
+                + "v0.9.16\r\n"
                 + "Clicking Clue Helper in Companion opens the panel full size, even if it was collapsed. DarkScape lockbox boxes sit on the tiles, and the click numbers count down while a tile is highlighted.\r\n"
                 + "\r\n"
                 + "v0.9.15\r\n"

@@ -1,3 +1,9 @@
+# Kavros Clue Helper v0.9.17
+
+East of the Ranging Guild is now recognised, including on DarkScape. It was wrongly shown as the Champions' Guild.
+
+Settings shows **Made by Zenity  ·  v0.9.17**. The full notes are in CHANGELOG.md.
+
 # Kavros Clue Helper v0.9.16
 
 Clicking Clue Helper in Companion opens the panel full size, even if it was collapsed. DarkScape lockbox boxes sit on the tiles, and the click numbers count down while a tile is highlighted.
