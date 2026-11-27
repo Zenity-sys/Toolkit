@@ -120,6 +120,9 @@ namespace KavrosClueHelper
                 Check(Native.ShowPanelMessage != Native.NoticeMessage, "a second launch with the switch posts its own message, not the already-running notice");
                 ClientBinding byHex = ClientLaunch.Resolve(new[] { "--hwnd", "0x1F" }, clientA.Handle, clients, new uint[0], overlays);
                 Check(byHex.Handle == clientB.Handle, "a hex hwnd argument selects that client");
+                Check(ClientLaunch.NoTrayRequested(new[] { "--hwnd", "32", "--no-tray" }) && ClientLaunch.NoTrayRequested(new[] { "--NO-TRAY" }), "the no-tray switch is recognised anywhere in the arguments");
+                Check(!ClientLaunch.NoTrayRequested(new string[0]) && !ClientLaunch.NoTrayRequested(null) && !ClientLaunch.NoTrayRequested(new[] { "--hwnd", "32", "--pid=200", "--no-trays", "--notray" }), "without the switch the helper keeps its tray icon");
+                Check(ClientLaunch.Resolve(new[] { "--no-tray", "--hwnd", "32" }, clientA.Handle, clients, new uint[0], overlays).Handle == clientC.Handle, "the no-tray switch does not change which client is bound");
                 ClientBinding byPid = ClientLaunch.Resolve(new[] { "--pid=200" }, clientA.Handle, clients, new uint[0], overlays);
                 Check(byPid.Handle == clientB.Handle && byPid.ProcessId == 200, "a pid argument selects that client's process");
                 ClientBinding byOverlay = ClientLaunch.Resolve(new[] { "--hwnd", "40" }, IntPtr.Zero, clients, new uint[0], overlays);

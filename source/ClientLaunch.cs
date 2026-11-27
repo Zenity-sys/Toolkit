@@ -227,6 +227,15 @@ namespace KavrosClueHelper
             return null;
         }
 
+        // Companion passes --no-tray when it provides the menu, so the helper adds no tray icon.
+        public static bool NoTrayRequested(string[] args)
+        {
+            if (args == null) return false;
+            foreach (string arg in args)
+                if (string.Equals(arg, "--no-tray", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
         private static bool TryArg(string[] args, string name, out string value)
         {
             value = null;

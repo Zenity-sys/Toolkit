@@ -117,6 +117,7 @@ namespace KavrosClueHelper
                 ClientBinding binding = ClientLaunch.Capture(args, launchForeground);
                 bool firstInstance;
                 singleInstance = new System.Threading.Mutex(true, InstanceName(binding), out firstInstance);
+                NoticeToast.TrayHidden = PuzzleSuiteForm.NoTrayOnLaunch = ClientLaunch.NoTrayRequested(args);
                 if (!firstInstance)
                 {
                     IntPtr running = FindRunningHelper(binding);

@@ -82,6 +82,7 @@ namespace KavrosClueHelper
         private FloatingCluePanel floatingPanel;
         private CompassSession compassSession;
         private NotifyIcon tray;
+        internal static bool NoTrayOnLaunch;
         private readonly Timer timer = new Timer();
         private readonly BackgroundWorker analysisWorker = new BackgroundWorker();
         private PuzzleAnalysisEngine analysisEngine;
@@ -246,6 +247,7 @@ namespace KavrosClueHelper
             var trayMenu=new ContextMenuStrip();trayMenu.Items.Add("Open panel",null,delegate{OpenPanel();});trayMenu.Items.Add("Settings",null,delegate{ShowSettings();});trayMenu.Items.Add("Exit helper",null,delegate{ExitHelper();});
             AppBranding.ArrangeSettings(this);
             KavrosTheme.AddMainCards(this);
+            if(NoTrayOnLaunch)tray=new NotifyIcon();else
             tray=new NotifyIcon{Icon=this.Icon,Text="Kavros Clue Helper",ContextMenuStrip=trayMenu,Visible=true};tray.DoubleClick+=delegate{ShowSettings();};
             Shown+=delegate{raiseUntil=DateTime.UtcNow.AddSeconds(8);if(startWithPanel&&preferences.Enabled){Hide();UpdateFloatingPanel();}if(startWithPanel&&ShowPanelOnLaunch)OpenPanel();};
             FormClosing+=delegate(object sender,FormClosingEventArgs e){if(!closing&&e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();OpenPanel();}};
