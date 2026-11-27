@@ -120,11 +120,12 @@ namespace KavrosClueHelper
                 if (!firstInstance)
                 {
                     IntPtr running = FindRunningHelper(binding);
-                    bool posted = running != IntPtr.Zero && Native.PostMessage(running, Native.NoticeMessage, IntPtr.Zero, IntPtr.Zero);
+                    bool posted = running != IntPtr.Zero && Native.PostMessage(running, ClientLaunch.ShowPanelRequested(args) ? Native.ShowPanelMessage : Native.NoticeMessage, IntPtr.Zero, IntPtr.Zero);
                     if (!posted) NoticeToast.ShowAndWait("Already running. Check the tray.", Native.VirtualScreen());
                     return 0;
                 }
                 PuzzleSuiteForm.LaunchBinding = binding;
+                PuzzleSuiteForm.ShowPanelOnLaunch = ClientLaunch.ShowPanelRequested(args);
                 PuzzleSuiteForm helper = new PuzzleSuiteForm();
                 helper.Shown += delegate
                 {

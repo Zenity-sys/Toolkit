@@ -83,6 +83,15 @@ namespace KavrosClueHelper
             return only == null ? ClientBinding.Empty : only;
         }
 
+        // Companion passes --show-panel to open the clue panel without a remote click.
+        public static bool ShowPanelRequested(string[] args)
+        {
+            if (args == null) return false;
+            foreach (string arg in args)
+                if (string.Equals(arg, "--show-panel", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
         public static ClientBinding Capture(string[] args, IntPtr foreground)
         {
             try

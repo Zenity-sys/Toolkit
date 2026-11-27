@@ -114,6 +114,10 @@ namespace KavrosClueHelper
                 Check(WindowLocator.Choose(new[] { clientA, clientB }, IntPtr.Zero, 0, clientA.Handle, taken) == clientB, "the first client is not the one AFK Warden is using");
                 ClientBinding byHwnd = ClientLaunch.Resolve(new[] { "--hwnd", "32" }, clientA.Handle, clients, new uint[0], overlays);
                 Check(byHwnd.Handle == clientC.Handle && byHwnd.ProcessId == 300, "a hwnd argument selects that client");
+                Check(ClientLaunch.ShowPanelRequested(new[] { "--hwnd", "32", "--show-panel" }) && ClientLaunch.ShowPanelRequested(new[] { "--SHOW-PANEL" }), "the show-panel switch is recognised anywhere in the arguments");
+                Check(!ClientLaunch.ShowPanelRequested(new string[0]) && !ClientLaunch.ShowPanelRequested(null) && !ClientLaunch.ShowPanelRequested(new[] { "--hwnd", "32", "--pid=200", "--show-panels" }), "without the switch the helper starts as it always did");
+                Check(ClientLaunch.Resolve(new[] { "--show-panel", "--hwnd", "32" }, clientA.Handle, clients, new uint[0], overlays).Handle == clientC.Handle, "the show-panel switch does not change which client is bound");
+                Check(Native.ShowPanelMessage != Native.NoticeMessage, "a second launch with the switch posts its own message, not the already-running notice");
                 ClientBinding byHex = ClientLaunch.Resolve(new[] { "--hwnd", "0x1F" }, clientA.Handle, clients, new uint[0], overlays);
                 Check(byHex.Handle == clientB.Handle, "a hex hwnd argument selects that client");
                 ClientBinding byPid = ClientLaunch.Resolve(new[] { "--pid=200" }, clientA.Handle, clients, new uint[0], overlays);

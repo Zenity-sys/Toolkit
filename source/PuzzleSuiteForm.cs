@@ -109,6 +109,7 @@ namespace KavrosClueHelper
         private List<GameWindow> availableWindows = new List<GameWindow>();
         private GameWindow attachedWindow;
         internal static ClientBinding LaunchBinding;
+        internal static bool ShowPanelOnLaunch;
         private IntPtr launchHandle;
         private uint launchProcess;
         private IntPtr panelOwner=new IntPtr(-1),overlayOwner=new IntPtr(-1),orderTuck=new IntPtr(-1);
@@ -246,7 +247,7 @@ namespace KavrosClueHelper
             AppBranding.ArrangeSettings(this);
             KavrosTheme.AddMainCards(this);
             tray=new NotifyIcon{Icon=this.Icon,Text="Kavros Clue Helper",ContextMenuStrip=trayMenu,Visible=true};tray.DoubleClick+=delegate{ShowSettings();};
-            Shown+=delegate{raiseUntil=DateTime.UtcNow.AddSeconds(8);if(startWithPanel&&preferences.Enabled){Hide();UpdateFloatingPanel();}};
+            Shown+=delegate{raiseUntil=DateTime.UtcNow.AddSeconds(8);if(startWithPanel&&preferences.Enabled){Hide();UpdateFloatingPanel();}if(startWithPanel&&ShowPanelOnLaunch)OpenPanel();};
             FormClosing+=delegate(object sender,FormClosingEventArgs e){if(!closing&&e.CloseReason==CloseReason.UserClosing){e.Cancel=true;Hide();OpenPanel();}};
             analysisWorker.DoWork += AnalyzeFrame;
             analysisWorker.RunWorkerCompleted += AnalysisCompleted;
@@ -597,6 +598,7 @@ namespace KavrosClueHelper
         protected override void WndProc(ref Message m)
         {
             if (m.Msg == Native.NoticeMessage) { try { ShowToast("Already running. Check the tray.", false, null, null); } catch (Exception ex) { NoteFailure(ex); } return; }
+            if (m.Msg == Native.ShowPanelMessage) { try { OpenPanel(); } catch (Exception ex) { NoteFailure(ex); } return; }
             if (m.Msg == 0x312) { try { if (m.WParam.ToInt32() == 11) RequestScan(); if (m.WParam.ToInt32() == 12) draw.Checked = !draw.Checked; } catch (Exception ex) { NoteFailure(ex); } }
             base.WndProc(ref m);
         }
