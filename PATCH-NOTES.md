@@ -1,3 +1,9 @@
+# Kavros Clue Helper v0.9.12
+
+What's new stays at the bottom of the window until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.
+
+Settings shows **Made by Zenity  ·  v0.9.12**. The full notes are in CHANGELOG.md.
+
 # Kavros Clue Helper v0.9.11
 
 DarkScape sliding puzzles are found while the side panel is open, and a DarkScape Celtic Knot whose top edge is the only full parchment line is found on the first look. `--show-panel` opens the clue panel at launch, and `--no-tray` starts the helper without a tray icon.

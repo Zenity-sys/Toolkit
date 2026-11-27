@@ -9,7 +9,7 @@ namespace KavrosClueHelper
 {
     internal static class AppBranding
     {
-        private const int FooterHeight = 28;
+        internal const int FooterHeight = 28;
         private static readonly Assembly App = typeof(AppBranding).Assembly;
 
         internal static string DisplayVersion

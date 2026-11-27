@@ -917,6 +917,13 @@ namespace KavrosClueHelper
             // Towers, Lockbox and the sliders still use.
             DetectedPuzzle liveKnot=FindKnotBoard(screenshot,pixels,45);
             if(liveKnot!=null) return liveKnot;
+            // Lockbox used to run only after the scale search. On a 1440p
+            // client that search uses the whole 180 ms, so the grid never
+            // started. A short resumable slice runs first, the same way
+            // Towers and the knot do. The 40 ms tower slice and the 180 ms
+            // budget are unchanged.
+            DetectedPuzzle liveBox=FindLockboxGrid(screenshot,pixels,order,LiveLockboxSlice,false);
+            if(liveBox!=null) return liveBox;
             var timer=System.Diagnostics.Stopwatch.StartNew();
             const int budget=180;
             if(allowBroadSearch)
@@ -937,11 +944,6 @@ namespace KavrosClueHelper
                     match=FindAtScale(screenshot,pixels,extra,timer,budget);
                     if(match!=null)return match;
                 }
-            }
-            if(timer.ElapsedMilliseconds<budget)
-            {
-                DetectedPuzzle lockbox=FindLockboxGrid(screenshot,pixels,order,budget-(int)timer.ElapsedMilliseconds,false);
-                if(lockbox!=null) return lockbox;
             }
             return null;
         }
@@ -1014,8 +1016,9 @@ namespace KavrosClueHelper
         private int towerScanY = 25;
         private int knotScanY = 24;
         private int lockScaleCursor;
+        private int lockIconCursor;
         private int heavyGate;
-        public void ResetSearch() { nextSearchScale=0; towerScanY=25; knotScanY=24; lockScaleCursor=0; triedScales.Clear(); heavyGate=0; }
+        public void ResetSearch() { nextSearchScale=0; towerScanY=25; knotScanY=24; lockScaleCursor=0; lockIconCursor=0; triedScales.Clear(); heavyGate=0; }
         // The chosen resolution and scaling pick the first template. The other
         // scales stay in the order, so a near miss is still readable.
         public float ExpectedScale(int pixelHeight)
@@ -1289,39 +1292,54 @@ namespace KavrosClueHelper
                 return new DetectedPuzzle {Kind=PuzzleKind.Lockbox,Bounds=bounds,Grid=grid,Scale=scale,Board=board,Confidence=minimum};
             }
         }
+        internal const int LiveLockboxSlice = 160;
+        internal DetectedPuzzle FindLiveLockbox(Bitmap image, Pixels pixels, int budgetMs)
+        {
+            if (image == null || pixels == null) return null;
+            float[] order = SearchOrder(ProfileHeight(image.Height), activeDpi, resolutionChoice, scalingChoice, resolutionManual, scalingManual);
+            return FindLockboxGrid(image, pixels, order, budgetMs, false);
+        }
         private DetectedPuzzle FindLockboxGrid(Bitmap image,Pixels pixels,float[] order,int budgetMs,bool complete)
         {
             Rectangle all=new Rectangle(Point.Empty,image.Size);
             var clock=System.Diagnostics.Stopwatch.StartNew();
             int start=complete?0:lockScaleCursor;
-            if(start<0||start>=order.Length)start=0;
+            int iconFrom=complete?0:lockIconCursor;
+            if(start<0||start>=order.Length){start=0;iconFrom=0;}
             for(int n=0;n<order.Length;n++)
             {
-                if(clock.ElapsedMilliseconds>=budgetMs){if(!complete)lockScaleCursor=(start+n)%order.Length;return null;}
-                float scale=order[(start+n)%order.Length];
+                int scaleIndex=(start+n)%order.Length;
+                if(clock.ElapsedMilliseconds>=budgetMs)
+                {
+                    if(!complete){lockScaleCursor=scaleIndex;lockIconCursor=n==0?iconFrom:0;}
+                    return null;
+                }
+                float scale=order[scaleIndex];
                 ImagePattern[] icons;
                 if(!lockboxPatterns.TryGetValue(scale,out icons))continue;
-                foreach(ImagePattern icon in icons)
-            {
-                foreach(Point point in icon.Find(pixels,all,40))
+                int firstIcon=n==0?iconFrom:0;
+                if(firstIcon<0||firstIcon>=icons.Length)firstIcon=0;
+                for(int i=firstIcon;i<icons.Length;i++)
                 {
-                    if(!LockboxSurface(pixels,point,scale))continue;
-                    DetectedPuzzle best=null;
-                    foreach(Point phase in new[]{new Point(0,0),new Point(-1,-1),new Point(0,-1),new Point(1,-1),new Point(-1,0),new Point(1,0),new Point(-1,1),new Point(0,1),new Point(1,1)})
+                    if(!complete&&clock.ElapsedMilliseconds>=budgetMs){lockScaleCursor=scaleIndex;lockIconCursor=i;return null;}
+                    foreach(Point point in icons[i].Find(pixels,all,40))
                     {
-                        Rectangle grid=new Rectangle(point.X+phase.X,point.Y+phase.Y,(int)Math.Round(182*scale),(int)Math.Round(182*scale));
-                        Rectangle bounds=Rectangle.Intersect(Rectangle.Inflate(grid,8,8),all);
-                        DetectedPuzzle candidate=ReadLockboxGrid(image,grid,scale,bounds,0.90);
-                        if(candidate!=null&&candidate.Confidence>=0.95)return candidate;
-                        if(candidate!=null && (best==null || candidate.Confidence>best.Confidence)) best=candidate;
+                        if(!LockboxSurface(pixels,point,scale))continue;
+                        DetectedPuzzle best=null;
+                        foreach(Point phase in new[]{new Point(0,0),new Point(-1,-1),new Point(0,-1),new Point(1,-1),new Point(-1,0),new Point(1,0),new Point(-1,1),new Point(0,1),new Point(1,1)})
+                        {
+                            Rectangle grid=new Rectangle(point.X+phase.X,point.Y+phase.Y,(int)Math.Round(182*scale),(int)Math.Round(182*scale));
+                            Rectangle bounds=Rectangle.Intersect(Rectangle.Inflate(grid,8,8),all);
+                            DetectedPuzzle candidate=ReadLockboxGrid(image,grid,scale,bounds,0.90);
+                            if(candidate!=null&&candidate.Confidence>=0.95){if(!complete){lockScaleCursor=0;lockIconCursor=0;}return candidate;}
+                            if(candidate!=null && (best==null || candidate.Confidence>best.Confidence)) best=candidate;
+                        }
+                        if(best!=null){if(!complete){lockScaleCursor=0;lockIconCursor=0;}return best;}
                     }
-                    if(best!=null) return best;
+                    SearchCancellation.Check();
                 }
-                SearchCancellation.Check();
-                if(!complete&&clock.ElapsedMilliseconds>=budgetMs){lockScaleCursor=(start+n+1)%order.Length;return null;}
             }
-            }
-            if(!complete)lockScaleCursor=0;
+            if(!complete){lockScaleCursor=0;lockIconCursor=0;}
             return null;
         }
         private bool LockboxSurface(Pixels p,Point origin,float scale)

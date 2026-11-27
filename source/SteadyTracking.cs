@@ -68,6 +68,50 @@ namespace KavrosClueHelper
         }
     }
 
+    public static class LockboxStep
+    {
+        // A locked lockbox is read again on this interval. Short enough that a
+        // click shows on the next frame, long enough that a one-frame misread
+        // is still held by the normal miss rule.
+        public const int RereadMilliseconds = 40;
+        public static int AppliedClicks(int[] from, int[] to, int direction)
+        {
+            if (from == null || to == null || from.Length != 25 || to.Length != 25) return 0;
+            if (direction != 1 && direction != -1) return 0;
+            for (int i = 0; i < 25; i++) if (from[i] < 0 || from[i] > 2 || to[i] < 0 || to[i] > 2) return 0;
+            if (Same(from, to)) return 0;
+            for (int i = 0; i < 25; i++)
+            {
+                int[] once = (int[])from.Clone();
+                LockboxSolver.Click(once, i, 1, direction);
+                if (Same(once, to)) return 1;
+            }
+            for (int first = 0; first < 25; first++)
+            for (int second = 0; second < 25; second++)
+            {
+                int[] twice = (int[])from.Clone();
+                LockboxSolver.Click(twice, first, 1, direction);
+                LockboxSolver.Click(twice, second, 1, direction);
+                if (Same(twice, to)) return 2;
+            }
+            return 0;
+        }
+        static bool Same(int[] left, int[] right)
+        {
+            for (int i = 0; i < 25; i++) if (left[i] != right[i]) return false;
+            return true;
+        }
+        // One or two legal clicks from the board on screen. Anything else,
+        // including a corrupted read, still waits for a second frame.
+        public static bool SkipConfirm(DetectedPuzzle shown, DetectedPuzzle next, int direction)
+        {
+            if (shown == null || next == null || shown.Kind != PuzzleKind.Lockbox || next.Kind != PuzzleKind.Lockbox) return false;
+            if (!SteadyPolicy.Near(shown.Bounds, next.Bounds, 8) || !SteadyPolicy.Near(shown.Grid, next.Grid, 8)) return false;
+            int clicks = AppliedClicks(shown.Board, next.Board, direction);
+            return clicks == 1 || clicks == 2;
+        }
+    }
+
     public static class SliderStep
     {
         public static bool OneLegalMove(int[] from, int[] to)

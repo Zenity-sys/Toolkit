@@ -70,7 +70,7 @@ namespace KavrosClueHelper
         private Label instructions;
         private readonly GuidanceOverlay overlay = new GuidanceOverlay();
         private readonly CaptureSearch captureSearch = new CaptureSearch();
-        private readonly OverlayPreferences preferences=new OverlayPreferences();
+        private readonly OverlayPreferences preferences;
         private readonly CheckBox floatingEnabled=new KavrosCheckBox();
         private readonly CheckBox checkUpdates=new KavrosCheckBox();
         private readonly CheckBox blurPreview=new KavrosCheckBox();
@@ -149,8 +149,10 @@ namespace KavrosClueHelper
             public int Resolution, Scaling, ResolutionManual, ScalingManual, ClientHeight;
         }
 
-        public PuzzleSuiteForm(bool startWithPanel=true)
+        public PuzzleSuiteForm(bool startWithPanel=true) : this(null, startWithPanel) { }
+        internal PuzzleSuiteForm(OverlayPreferences stored, bool startWithPanel)
         {
+            preferences = stored ?? new OverlayPreferences();
             if (LaunchBinding != null) { launchHandle = LaunchBinding.Handle; launchProcess = LaunchBinding.ProcessId; }
             KavrosTheme.BlurPreview = preferences.BlurPreview;
             Text = "Kavros Clue Helper · " + AppBranding.DisplayVersion;
@@ -159,7 +161,7 @@ namespace KavrosClueHelper
             BackColor = KavrosTheme.Bg; ForeColor = KavrosTheme.Text; Font = KavrosTheme.Ui(9F, false);
             Label title = LabelAt("CLUE HELPER", 90, 27, 400, 30); title.Font = KavrosTheme.Display(16F); title.UseMnemonic = false;
             Label subtitle = LabelAt("Easy / Medium / Hard / Elite / Master / Puzzle helpers", 92, 58, 400, 18); subtitle.ForeColor = KavrosTheme.TextFaint; subtitle.Font = KavrosTheme.Ui(8.5F, false);
-            connection.SetBounds(16, 84, 484, 22); connection.Font = new Font("Segoe UI", 8F); connection.ForeColor = Color.Gold; connection.Text = "Looking for the Kavros game window..."; Controls.Add(connection);
+            connection.SetBounds(16, 84, 484, 22); connection.Font = KavrosTheme.System(8F, FontStyle.Regular); connection.ForeColor = Color.Gold; connection.Text = "Looking for the Kavros game window..."; Controls.Add(connection);
             windows.SetBounds(28, 134, 355, 28); windows.DropDownStyle = ComboBoxStyle.DropDownList; KavrosTheme.StyleCombo(windows); Controls.Add(windows);
             ButtonAt("Refresh", 393, 134, 95, RefreshWindows);
             ButtonAt("Scan now", 28, 168, 80, RequestScan, ButtonTone.Primary);
@@ -201,7 +203,7 @@ namespace KavrosClueHelper
                 }
             };
 
-            detected.SetBounds(16, 304, 484, 34); detected.Font = new Font("Segoe UI", 12F, FontStyle.Bold); detected.ForeColor = KavrosTheme.Ok; detected.Text = "Waiting for a puzzle"; Controls.Add(detected);
+            detected.SetBounds(16, 304, 484, 34); detected.Font = KavrosTheme.System(12F, FontStyle.Bold); detected.ForeColor = KavrosTheme.Ok; detected.Text = "Waiting for a puzzle"; Controls.Add(detected);
             preview.SetBounds(28, 366, 460, 222); preview.SizeMode = PictureBoxSizeMode.Zoom; preview.BackColor = KavrosTheme.BgDeep; Controls.Add(preview);
             canvas.SetBounds(28, 602, 260, 235); Controls.Add(canvas);
             instructions = new PaintedLabel { Text = InstructionsText(), Left = 300, Top = 602, Width = 188, Height = 46, Renderer = StatusText.DrawLegend }; Controls.Add(instructions);
@@ -247,6 +249,9 @@ namespace KavrosClueHelper
             var trayMenu=new ContextMenuStrip();trayMenu.Items.Add("Open panel",null,delegate{OpenPanel();});trayMenu.Items.Add("Settings",null,delegate{ShowSettings();});trayMenu.Items.Add("Exit helper",null,delegate{ExitHelper();});
             AppBranding.ArrangeSettings(this);
             KavrosTheme.AddMainCards(this);
+            closedClientHeight = ClientSize.Height;
+            BuildReleaseBanner();
+            if (ReleaseNotes.IsNewer(preferences.SeenNotes, AppBranding.DisplayVersion)) ShowReleaseBanner();
             if(NoTrayOnLaunch)tray=new NotifyIcon();else
             tray=new NotifyIcon{Icon=this.Icon,Text="Kavros Clue Helper",ContextMenuStrip=trayMenu,Visible=true};tray.DoubleClick+=delegate{ShowSettings();};
             Shown+=delegate{raiseUntil=DateTime.UtcNow.AddSeconds(8);if(startWithPanel&&preferences.Enabled){Hide();UpdateFloatingPanel();}if(startWithPanel&&ShowPanelOnLaunch)OpenPanel();};
@@ -259,7 +264,11 @@ namespace KavrosClueHelper
             timer.Interval = 50; timer.Tick += delegate { TickReader(); }; timer.Start();
             FormClosed += delegate { closing=true; CancelAnalysis(); StopTracking(); if(trackingCancellation!=null && !trackingWorker.IsBusy){trackingCancellation.Dispose();trackingCancellation=null;} timer.Stop(); timer.Dispose(); if(notice!=null)notice.Dispose(); sliderTips.Dispose(); overlay.Dispose();floatingPanel.Dispose();tray.Visible=false;tray.Dispose();trayMenu.Dispose();if (Icon != null) Icon.Dispose(); if (preview.Image != null) preview.Image.Dispose(); if(diagnosticCapture!=null) diagnosticCapture.Dispose(); if(offlineSource!=null) offlineSource.Dispose(); Native.UnregisterHotKey(Handle, 11); Native.UnregisterHotKey(Handle, 12); };
         }
-        private NoticeToast notice; private TextBox whatsNew; private Panel whatsNewPanel;
+        private NoticeToast notice;
+        private int closedClientHeight;
+        private bool notesOpen;
+        private Panel notesHost;
+        private TextBox notesBody;
         internal void ShowToast(string message, bool error, string action, Action click)
         {
             if (notice == null || notice.IsDisposed) notice = new NoticeToast();
@@ -269,28 +278,66 @@ namespace KavrosClueHelper
         internal void ShowWhatsNew()
         {
             ShowSettings();
-            if (whatsNewPanel == null)
-            {
-                whatsNewPanel = new Panel { BackColor = KavrosTheme.Bg, Visible = false };
-                Panel header = new Panel { Dock = DockStyle.Top, Height = 36, BackColor = KavrosTheme.BgRaise };
-                Label title = new Label { Text = "What's new", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Padding = new Padding(10, 0, 0, 0), ForeColor = KavrosTheme.Gold, Font = KavrosTheme.Ui(10F, true) };
-                Button close = new OpaqueButton { Text = "Close  X", Dock = DockStyle.Right, Width = 96, FlatStyle = FlatStyle.Flat, BackColor = KavrosTheme.Button, ForeColor = ForeColor, Tone = ButtonTone.Secondary };
-                close.FlatAppearance.BorderColor = KavrosTheme.ButtonLine;
-                close.Click += delegate { HideWhatsNew(); };
-                header.Controls.Add(title); header.Controls.Add(close);
-                whatsNew = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None, Font = KavrosTheme.Ui(9F, false), BackColor = KavrosTheme.Bg, ForeColor = KavrosTheme.Text };
-                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CHANGELOG.md");
-                whatsNew.Text = File.Exists(path) ? File.ReadAllText(path) : "What's new is listed in CHANGELOG.md next to the program.";
-                // Fill first, then the header, so docking keeps the header on top.
-                whatsNewPanel.Controls.Add(whatsNew); whatsNewPanel.Controls.Add(header);
-                Controls.Add(whatsNewPanel);
-            }
-            whatsNewPanel.Bounds = new Rectangle(16, 88, Math.Max(40, ClientSize.Width - 32), Math.Max(40, ClientSize.Height - 140));
-            whatsNewPanel.Visible = true; whatsNewPanel.BringToFront();
-            whatsNew.SelectionStart = 0; whatsNew.SelectionLength = 0;
+            ShowReleaseBanner();
         }
-        private void HideWhatsNew() { if (whatsNewPanel != null) whatsNewPanel.Visible = false; }
-        private void ToggleWhatsNew() { if (whatsNewPanel != null && whatsNewPanel.Visible) HideWhatsNew(); else ShowWhatsNew(); }
+        private void BuildReleaseBanner()
+        {
+            notesHost = new Panel { Name = "WhatsNewBanner", BackColor = KavrosTheme.BgRaise, Visible = false };
+            Label heading = new Label { Name = "WhatsNewHeading", Text = "What's new", ForeColor = KavrosTheme.Gold, BackColor = KavrosTheme.BgRaise, Font = KavrosTheme.Ui(10F, true), TextAlign = ContentAlignment.MiddleLeft };
+            OpaqueButton dismiss = new OpaqueButton { Name = "WhatsNewDismiss", Text = "Got it", Tone = ButtonTone.Secondary, FlatStyle = FlatStyle.Flat, BackColor = KavrosTheme.Button, ForeColor = KavrosTheme.Text };
+            dismiss.FlatAppearance.BorderColor = KavrosTheme.ButtonLine;
+            dismiss.Click += delegate { DismissReleaseNotes(); };
+            notesBody = new TextBox { Name = "WhatsNewBody", Multiline = true, ReadOnly = true, WordWrap = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, HideSelection = true, TabStop = false, Font = KavrosTheme.Ui(8.5F, false), BackColor = KavrosTheme.Bg, ForeColor = KavrosTheme.Text, Text = ReleaseNotes.Text() };
+            notesHost.Controls.Add(heading);
+            notesHost.Controls.Add(dismiss);
+            notesHost.Controls.Add(notesBody);
+            Controls.Add(notesHost);
+        }
+        internal void ShowReleaseBanner()
+        {
+            notesOpen = true;
+            ApplyReleaseLayout();
+        }
+        internal void DismissReleaseNotes()
+        {
+            preferences.SeenNotes = AppBranding.DisplayVersion;
+            preferences.Save();
+            notesOpen = false;
+            ApplyReleaseLayout();
+        }
+        private void HideReleaseNotes()
+        {
+            notesOpen = false;
+            ApplyReleaseLayout();
+        }
+        private void ToggleWhatsNew()
+        {
+            if (notesOpen) HideReleaseNotes();
+            else ShowReleaseBanner();
+        }
+        private void ApplyReleaseLayout()
+        {
+            if (notesHost == null) return;
+            int height = notesOpen ? closedClientHeight + WhatsNewLayout.Extra : closedClientHeight;
+            if (ClientSize.Height != height) ClientSize = new Size(ClientSize.Width, height);
+            if (!notesOpen)
+            {
+                notesHost.Visible = false;
+                return;
+            }
+            Rectangle host = WhatsNewLayout.Host(ClientSize);
+            notesHost.SetBounds(host.X, host.Y, host.Width, host.Height);
+            Label heading = (Label)notesHost.Controls["WhatsNewHeading"];
+            Control dismiss = notesHost.Controls["WhatsNewDismiss"];
+            heading.SetBounds(WhatsNewLayout.Pad, 0, Math.Max(40, host.Width - 96), WhatsNewLayout.Header);
+            dismiss.SetBounds(host.Width - 80, 4, 72, WhatsNewLayout.Header - 8);
+            Rectangle body = WhatsNewLayout.Body(host);
+            notesBody.SetBounds(body.X, body.Y, body.Width, body.Height);
+            notesHost.Visible = true;
+            notesHost.BringToFront();
+            notesBody.SelectionStart = 0;
+            notesBody.SelectionLength = 0;
+        }
         private void ShowSettings()
         {
             if(WindowState==FormWindowState.Minimized)WindowState=FormWindowState.Normal;
@@ -606,6 +653,12 @@ namespace KavrosClueHelper
         }
         private void RefreshWindows()
         {
+            try { RefreshWindowList(); }
+            catch (EntryPointNotFoundException) { }
+            catch (DllNotFoundException) { }
+        }
+        private void RefreshWindowList()
+        {
             GameWindow previousChoice = windows.SelectedItem as GameWindow;
             bool manual = previousChoice != null && !previousChoice.Automatic;
             IntPtr selected = manual ? previousChoice.Handle : IntPtr.Zero;
@@ -853,6 +906,7 @@ namespace KavrosClueHelper
                 diagnosticCapture=result.DiagnosticImage; result.DiagnosticImage=null;
                 int wait=result.Plan==null?75:125;
                 if(result.Plan!=null&&result.Plan.Puzzle!=null&&result.Plan.Puzzle.Kind==PuzzleKind.Knot)wait=40;
+                if(result.Plan!=null&&result.Plan.Puzzle!=null&&result.Plan.Puzzle.Kind==PuzzleKind.Lockbox)wait=LockboxStep.RereadMilliseconds;
                 if(result.Plan==null && current==null && lastLocated==null) wait=0;
                 nextRead=job.CapturedAt.AddMilliseconds(wait);
                 captureDetails += "; last analysis "+result.Milliseconds+" ms"+(result.Unchanged?"; cached":"");
@@ -990,7 +1044,7 @@ namespace KavrosClueHelper
                 puzzleDetails=puzzle.Kind+"; "+puzzle.Bounds+"; scale "+puzzle.Scale+"; confidence "+puzzle.Confidence.ToString("0.000");
                 if(puzzle.Kind==PuzzleKind.Towers && puzzle.Towers!=null && puzzle.Towers.Top!=null && puzzle.Towers.Bottom!=null && puzzle.Towers.Left!=null && puzzle.Towers.Right!=null) puzzleDetails+="; clues "+String.Join(",",puzzle.Towers.Top.Concat(puzzle.Towers.Bottom).Concat(puzzle.Towers.Left).Concat(puzzle.Towers.Right));
                 if(puzzle.Kind==PuzzleKind.Compass)puzzleDetails+="; "+puzzle.Compass.Heading+"; arrow pixels "+puzzle.Compass.Pixels+"; error "+(puzzle.Compass.Error*180/Math.PI).ToString("0.000")+" degrees; bearings "+compassSession.Bearings.Count;
-                if(job.Stable && pendingKey!=puzzle.Key && DetectionPolicy.NeedsConfirmation(result.Plan) && !SliderStep.SkipConfirm(current,puzzle,slidingMoves)) { pendingKey=puzzle.Key; status.Text="Puzzle found - confirming the next frame..."; nextRead=DateTime.UtcNow.AddMilliseconds(100); return; }
+                if(job.Stable && pendingKey!=puzzle.Key && DetectionPolicy.NeedsConfirmation(result.Plan) && !SliderStep.SkipConfirm(current,puzzle,slidingMoves) && !LockboxStep.SkipConfirm(current,puzzle,job.Reverse?-1:1)) { pendingKey=puzzle.Key; status.Text="Puzzle found - confirming the next frame..."; nextRead=DateTime.UtcNow.AddMilliseconds(100); return; }
                 DetectedPuzzle shownClue=retainedClue.Display(current);
                 if(!job.Offline&&shownClue!=null&&shownClue.Kind==PuzzleKind.Scan&&!scanChange.Accept(shownClue.Key,puzzle.Key))
                 {nextRead=DateTime.UtcNow.AddMilliseconds(100);return;}
@@ -1341,7 +1395,7 @@ namespace KavrosClueHelper
         }
         protected override bool ProcessCmdKey(ref Message message, Keys keys)
         {
-            if (keys == Keys.Escape && whatsNewPanel != null && whatsNewPanel.Visible) { HideWhatsNew(); return true; }
+            if (keys == Keys.Escape && notesOpen) { HideReleaseNotes(); return true; }
             if (keys == (Keys.Control | Keys.V))
             {
                 try

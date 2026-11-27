@@ -20,6 +20,7 @@ namespace KavrosClueHelper
         public int Resolution, Scaling;
         public int ResolutionManual=1080, ScalingManual=100;
         public Point Offset=new Point(12,72);
+        public string SeenNotes="";
         public readonly List<CompassPosition> SavedPositions=new List<CompassPosition>();
         private readonly string path;
         public OverlayPreferences(string file=null)
@@ -42,6 +43,7 @@ namespace KavrosClueHelper
                     if(p.Length==2&&p[0]=="scaling")Scaling=ParseChoice(p[1],100,125,150,200);
                     if(p.Length==2&&p[0]=="resolution-manual")ResolutionManual=ParseChoice(p[1],1080,1440,2160)==0?1080:ParseChoice(p[1],1080,1440,2160);
                     if(p.Length==2&&p[0]=="scaling-manual")ScalingManual=ParseChoice(p[1],100,125,150,200)==0?100:ParseChoice(p[1],100,125,150,200);
+                    if(p.Length==2&&p[0]=="seen-notes")SeenNotes=p[1]??"";
                     if(p.Length==3&&p[0]=="offset"&&Int32.TryParse(p[1],out x)&&Int32.TryParse(p[2],out y))Offset=new Point(x,y);
                     if(p.Length==5&&p[0]=="spot"&&Int32.TryParse(p[2],out x)&&Int32.TryParse(p[3],out y))
                     {
@@ -75,6 +77,7 @@ namespace KavrosClueHelper
                 lines.Add("scaling\t"+(Scaling==0?"auto":Scaling.ToString()));
                 lines.Add("resolution-manual\t"+ResolutionManual);
                 lines.Add("scaling-manual\t"+ScalingManual);
+                lines.Add("seen-notes\t"+SeenNotes);
                 lines.AddRange(SavedPositions.Select(p=>"spot\t"+Uri.EscapeDataString(p.Name)+"\t"+p.X+"\t"+p.Y+"\t"+p.Radius.ToString(CultureInfo.InvariantCulture)));
                 File.WriteAllLines(path,lines);
             }

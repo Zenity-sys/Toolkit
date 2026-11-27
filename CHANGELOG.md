@@ -1,5 +1,11 @@
 # Kavros Clue Helper
 
+## 0.9.12
+
+**Puzzles**
+- What's new stays at the bottom of the window until you press Got it. The note lists this version and the recent ones, and it comes back only after the next update.
+- Lockboxes are found during live play on a 1440p client. The numbers update as soon as you click.
+
 ## 0.9.11
 
 **Puzzles**

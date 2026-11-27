@@ -96,13 +96,39 @@ namespace KavrosClueHelper
 
         private static FontFamily DisplayFamily { get { EnsureFonts(); return display; } }
 
+        static Font Make(FontFamily family, float size, FontStyle style, GraphicsUnit unit, bool display)
+        {
+            if (family != null)
+            {
+                Font embedded = TryFont(delegate { return new Font(family, size, style, unit); });
+                if (embedded != null) return embedded;
+            }
+            string[] names = display ? new[] { "Georgia", "DejaVu Serif", "Liberation Serif" } : new[] { "Segoe UI", "DejaVu Sans", "Liberation Sans" };
+            foreach (string name in names)
+            {
+                string chosen = name;
+                Font match = TryFont(delegate { return new Font(chosen, size, style, unit); });
+                if (match != null) return match;
+            }
+            return new Font(display ? FontFamily.GenericSerif : FontFamily.GenericSansSerif, size, style, unit);
+        }
+        static Font TryFont(Func<Font> create)
+        {
+            try
+            {
+                Font font = create();
+                float height = font.Height;
+                if (height > 0) return font;
+            }
+            catch (Exception) { }
+            return null;
+        }
         public static Font Display(float size)
         {
             string key = "d" + size;
             Font font;
             if (cache.TryGetValue(key, out font)) return font;
-            FontFamily family = DisplayFamily;
-            font = family != null ? new Font(family, size, FontStyle.Regular, GraphicsUnit.Point) : new Font("Georgia", size, FontStyle.Bold, GraphicsUnit.Point);
+            font = Make(DisplayFamily, size, FontStyle.Regular, GraphicsUnit.Point, true);
             cache[key] = font;
             return font;
         }
@@ -113,8 +139,7 @@ namespace KavrosClueHelper
             string key = "p" + pixels;
             Font font;
             if (cache.TryGetValue(key, out font)) return font;
-            FontFamily family = DisplayFamily;
-            font = family != null ? new Font(family, pixels, FontStyle.Regular, GraphicsUnit.Pixel) : new Font("Georgia", pixels, FontStyle.Bold, GraphicsUnit.Pixel);
+            font = Make(DisplayFamily, pixels, FontStyle.Regular, GraphicsUnit.Pixel, true);
             cache[key] = font;
             return font;
         }
@@ -126,9 +151,13 @@ namespace KavrosClueHelper
             if (cache.TryGetValue(key, out font)) return font;
             EnsureFonts();
             FontFamily family = semibold ? semiboldFamily : uiFamily;
-            font = family != null ? new Font(family, size, FontStyle.Regular, GraphicsUnit.Point) : new Font("Segoe UI", size, semibold ? FontStyle.Bold : FontStyle.Regular, GraphicsUnit.Point);
+            font = Make(family, size, FontStyle.Regular, GraphicsUnit.Point, false);
             cache[key] = font;
             return font;
+        }
+        public static Font System(float size, FontStyle style)
+        {
+            return Make(null, size, style, GraphicsUnit.Point, false);
         }
 
         // Dark native caption. Windows 11 also takes the navy caption colour and

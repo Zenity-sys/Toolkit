@@ -33,6 +33,8 @@ namespace KavrosClueHelper
                 if(args.Length>1&&args[0]=="--tower-poll-test")return TowerPollingTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--knot-test")return KnotSpeedTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--knot-capture-test")return KnotCaptureTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--whats-new-test")return ReleaseBannerTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--lockbox-live-test")return LockboxLiveTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--steady-test")return SteadyTrackingTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--reliability-test")return ReliabilityRegressionTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--paint-test")return PaintingRegressionTests.Run(args[1]);
@@ -76,6 +78,10 @@ namespace KavrosClueHelper
                     if(analysis!=0) return analysis;
                     int towerPoll=TowerPollingTests.Run(report);
                     if(towerPoll!=0) return towerPoll;
+                    int lockboxLive=LockboxLiveTests.Run(report);
+                    if(lockboxLive!=0) return lockboxLive;
+                    int whatsNew=ReleaseBannerTests.Run(report);
+                    if(whatsNew!=0) return whatsNew;
                     int knotCapture=KnotCaptureTests.Run(report);
                     if(knotCapture!=0) return knotCapture;
                     int overlay=OverlayRegressionTests.Run(report);

@@ -76,8 +76,9 @@ namespace KavrosClueHelper
         private DateTime boardSeen;
         private int sourceId = Int32.MinValue;
         private DateTime nextBroadSearch = DateTime.MinValue;
-        // Lockbox and towers keep their last good plan through brief misses
-        // and only change board after the new board is read twice in a row.
+        // Lockbox and towers keep their last good plan through brief misses.
+        // A different board is shown after it is read twice, unless the new
+        // lockbox is one or two legal clicks from the board on screen.
         private readonly DetectionHold boardHold = new DetectionHold();
         private int towerWaits;
         private readonly ChangeConfirmation boardChange = new ChangeConfirmation();
@@ -257,6 +258,10 @@ namespace KavrosClueHelper
                             puzzle=detector.DetectClues(image,pixels,detector.LastScrollBounds);
                             if(puzzle==null&&cached!=null&&last!=null&&last.Kind==PuzzleKind.EmoteClue)
                                 return new AnalysisResult{Plan=cached,Unchanged=true,Milliseconds=timer.ElapsedMilliseconds};
+                            // The lockbox window can look like a scroll. The
+                            // same resumable slice still runs, so the grid is
+                            // not abandoned with the rest of the board search.
+                            if(puzzle==null)puzzle=detector.FindLiveLockbox(image,pixels,PuzzleDetector.LiveLockboxSlice);
                             if(puzzle==null)
                                 return new AnalysisResult{Preview=MakePreview(image,new Rectangle(Point.Empty,image.Size)),Milliseconds=timer.ElapsedMilliseconds};
                         }
@@ -286,6 +291,10 @@ namespace KavrosClueHelper
                             // clue, so the slider close button is still checked.
                             puzzle=detector.FindCompass(image,pixels);
                             if(puzzle==null)puzzle=detector.FindOpenSlider(image,pixels);
+                            // A bright side panel is not a lockbox either. The
+                            // same short slice used in live board search still
+                            // runs, so a 1440p lockbox is not skipped.
+                            if(puzzle==null)puzzle=detector.FindLiveLockbox(image,pixels,PuzzleDetector.LiveLockboxSlice);
                             if(puzzle==null)
                                 return new AnalysisResult{Preview=MakePreview(image,new Rectangle(Point.Empty,image.Size)),Milliseconds=timer.ElapsedMilliseconds};
                         }
@@ -371,7 +380,8 @@ namespace KavrosClueHelper
                     }
                 }
                 bool confidentKnot=puzzle.Kind==PuzzleKind.Knot&&puzzle.Knot!=null&&puzzle.Knot.Reliable;
-                if(confidentKnot)boardChange.Reset();
+                bool legalLockbox=puzzle.Kind==PuzzleKind.Lockbox&&LockboxStep.SkipConfirm(last,puzzle,reverse?-1:1);
+                if(confidentKnot||legalLockbox)boardChange.Reset();
                 else if(livePolling&&cached!=null&&last!=null&&SteadyPolicy.HoldsThroughMisses(last.Kind)&&puzzle.Kind==last.Kind&&puzzle.Bounds.IntersectsWith(last.Bounds))
                 {
                     // A click changes the board for good; a misread lasts one
