@@ -2170,6 +2170,14 @@ Final step: Run west to the river west of the Champions' Guild.
 Clue: Dig three tiles east of the tree opposite the small island.
 Tile 3166, 3360 | level 0</details>
   </clue>
+  <clue id="64" tier="medium" type="map" heading="East of the Ranging Guild" action="Dig" x="2702" y="3429" width="1" height="1" level="0">
+    <text>East of the Ranging Guild.</text>
+    <details>Fastest: Ctrl+T &gt; Skilling &gt; Archaeology &gt; Stormguard Citadel, then run north-east.
+Alternatively: Ardougne lodestone, then run north-east.
+Third option: Seers' Village lodestone, then run south.
+Final step: Dig east of the Ranging Guild following the map from the big tree (3E 3N 1E 2N).
+Tile 2702, 3429 | level 0</details>
+  </clue>
   <clue id="44" tier="medium" type="map" heading="Clock Tower, south of East Ardougne" action="Search Crate" x="2565" y="3248" width="1" height="1" level="0">
     <text>A crate near a bridge over a river.</text>
     <details>Fastest: Ctrl+T &gt; Locations &gt; Ardougne Monastery.

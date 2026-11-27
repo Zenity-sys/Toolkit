@@ -7,7 +7,7 @@ The linked RS3 guides were checked for tier/category coverage. Their full page d
 | Tier | Structured baseline definitions | Additional wiki entries | Main categories |
 |---|---:|---:|---|
 | Easy | 100 | 1 newer Wendlewick search clue | Simple/search/talk, cryptic, emote, map |
-| Medium | 121 | 0 identified here | Simple/search/talk, cryptic, emote, anagram, map, coordinates |
+| Medium | 121 | 1 newer East of the Ranging Guild map | Simple/search/talk, cryptic, emote, anagram, map, coordinates |
 | Hard | 122 | 0 identified here | Cryptic, emote, anagram, map, coordinates |
 | Elite | 21 | 1 newer Wendlewick scan region | 20 baseline scan regions and one compass pool |
 
@@ -112,6 +112,7 @@ The user has now authorised implementation after catalogue compilation: Easy, th
 | CT:271 | Emote | Yawn in Varrock Palace library. Equip a holy symbol, leather vambraces and an iron warhammer. | Yawn; then speak to Uri | x=3207, y=3490, plane=0; area 8x8 | Holy symbol; Leather vamraces; Iron warhammer; Yawn |
 | CT:56 | Map | X marks the spot at the end of a path north of a mine. | Dig two tiles south-east of the dead tree | x=3290, y=3373, plane=0 |  |
 | CT:63 | Map | X marks the spot east of a tree near a small island on a river. | Dig three tiles east of the tree | x=3166, y=3360, plane=0 |  |
+| CT:64 | Map | East of the Ranging Guild. | Dig east of the Ranging Guild following the map from the big tree | x=2702, y=3429, plane=0 |  |
 | CT:50 | Map | X marks the spot in front of a small house surrounded by trees and near a bridge. | Dig in front of the door | x=2612, y=3481, plane=0 |  |
 | CT:55 | Map | X marks the spot near a statue. | Dig two tiles south-east of the bench | x=2971, y=3414, plane=0 |  |
 | CT:54 | Map | X marks the spot near some rocks and a tree. | Dig west of the tree | x=3043, y=3399, plane=0 |  |

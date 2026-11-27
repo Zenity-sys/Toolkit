@@ -8787,6 +8787,28 @@
       "status": "Reference data; Kavros verification required"
     },
     {
+      "id": 64,
+      "type": "map",
+      "tier": "medium",
+      "image_url": "/assets/Map_clue_Ranging_Guild.png",
+      "text": [
+        "East of the Ranging Guild."
+      ],
+      "solution": {
+        "type": "dig",
+        "description": "east of the Ranging Guild, following the map from the big tree",
+        "spot": {
+          "x": 2702,
+          "y": 3429,
+          "level": 0
+        }
+      },
+      "catalogue_id": "CT:64",
+      "source_url": "https://runescape.wiki/w/Clue_scroll_(medium)_-_East_of_the_Ranging_Guild",
+      "guide_url": "https://runescape.wiki/w/Treasure_Trails/Guide/Maps",
+      "status": "Wiki map clue; dig tile from the wiki coordinates"
+    },
+    {
       "id": 44,
       "type": "map",
       "tier": "medium",
