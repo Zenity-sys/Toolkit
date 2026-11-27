@@ -16,8 +16,8 @@ namespace KavrosClueHelper
             {
                 Action<bool, string> check = delegate(bool ok, string msg) { count++; if (!ok) throw new Exception(msg); };
                 string notes = ReleaseNotes.Text();
-                check(notes.Contains("v0.9.15") && notes.Contains("v0.9.14") && notes.Contains("v0.9.13") && notes.Contains("v0.9.12") && notes.Contains("v0.9.11") && notes.Contains("v0.9.10") && notes.Contains("v0.9.9") && notes.Contains("v0.9.8"), "notes list the current version and the recent ones");
-                check(notes.IndexOf("v0.9.15") < notes.IndexOf("v0.9.14") && notes.IndexOf("v0.9.14") < notes.IndexOf("v0.9.13") && notes.IndexOf("v0.9.13") < notes.IndexOf("v0.9.12") && notes.IndexOf("v0.9.12") < notes.IndexOf("v0.9.11") && notes.IndexOf("v0.9.11") < notes.IndexOf("v0.9.8"), "newer notes come first");
+                check(notes.Contains("v0.9.16") && notes.Contains("v0.9.15") && notes.Contains("v0.9.14") && notes.Contains("v0.9.13") && notes.Contains("v0.9.12") && notes.Contains("v0.9.11") && notes.Contains("v0.9.10") && notes.Contains("v0.9.9") && notes.Contains("v0.9.8"), "notes list the current version and the recent ones");
+                check(notes.IndexOf("v0.9.16") < notes.IndexOf("v0.9.15") && notes.IndexOf("v0.9.15") < notes.IndexOf("v0.9.14") && notes.IndexOf("v0.9.14") < notes.IndexOf("v0.9.13") && notes.IndexOf("v0.9.13") < notes.IndexOf("v0.9.12") && notes.IndexOf("v0.9.12") < notes.IndexOf("v0.9.11") && notes.IndexOf("v0.9.11") < notes.IndexOf("v0.9.8"), "newer notes come first");
                 check(notes.IndexOf("PR #", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("RuneApps", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("Jagex", StringComparison.OrdinalIgnoreCase) < 0 && notes.IndexOf("Alt1", StringComparison.OrdinalIgnoreCase) < 0, "notes stay in player-facing language");
                 check(ReleaseNotes.IsNewer("", "v0.9.12") && ReleaseNotes.IsNewer(null, "v0.9.12") && ReleaseNotes.IsNewer("v0.9.11", "v0.9.12"), "a missing or older dismissal shows the notes");
                 check(!ReleaseNotes.IsNewer("v0.9.12", "v0.9.12") && !ReleaseNotes.IsNewer("0.9.12", "v0.9.12") && !ReleaseNotes.IsNewer("v0.9.13", "v0.9.12"), "the current or a newer dismissal stays hidden");
@@ -28,6 +28,14 @@ namespace KavrosClueHelper
                 string panelFile = Path.Combine(dir, "panel.txt");
                 string seen = Path.Combine(dir, "seen.txt");
                 File.WriteAllText(seen, "seen-notes\t" + AppBranding.DisplayVersion + "\r\n");
+                using (PuzzleSuiteForm collapsed = new PuzzleSuiteForm(new OverlayPreferences(Path.Combine(dir, "collapsed.txt")) { Collapsed = true, Enabled = true }, false))
+                {
+                    StopTimer(collapsed);
+                    check(collapsed.PanelCollapsed && collapsed.PanelClientHeight <= 40, "a collapsed panel is the thin strip (" + collapsed.PanelClientHeight + ")");
+                    collapsed.OpenPanel();
+                    Application.DoEvents();
+                    check(!collapsed.PanelCollapsed && collapsed.PanelClientHeight > 40, "OpenPanel expands a collapsed panel (" + collapsed.PanelClientHeight + ")");
+                }
                 using (PuzzleSuiteForm settings = new PuzzleSuiteForm(new OverlayPreferences(fresh), false))
                 {
                     StopTimer(settings);
@@ -48,7 +56,7 @@ namespace KavrosClueHelper
                     int gap = banner.Top - card.Bottom;
                     check(banner.Visible && heading.Text == "What's new" && heading.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the settings banner has a gold What's new header");
                     check(dismiss.Text == "Got it" && dismiss.Right <= banner.Width && heading.Left < dismiss.Left, "Got it sits on the right of the settings header");
-                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.15"), "the settings changelog scrolls");
+                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.16"), "the settings changelog scrolls");
                     check(!card.IsEmpty && gap >= 12 && gap <= 16, "the banner sits " + gap + " px below the CLIENT card");
                     check(!banner.Bounds.IntersectsWith(card), "the banner does not cover the CLIENT card");
                     MainSurface surface = settings.Controls.OfType<MainSurface>().Single();
@@ -140,7 +148,7 @@ namespace KavrosClueHelper
                     offer.SetWaiting("Open a clue or puzzle in Kavros.");
                     ShowAt(offer, new Point(40, 40));
                     int before = offer.Activations;
-                    offer.OfferUpdate("v0.9.15");
+                    offer.OfferUpdate("v0.9.16");
                     Application.DoEvents();
                     check(offer.Activations == before, "showing the update bar does not activate the panel");
                     check((offer.CreateParamsStyle() & Native.ExNoActivate) != 0, "the update bar stays on a window that does not take focus");
@@ -152,7 +160,7 @@ namespace KavrosClueHelper
                     Rectangle text = new Rectangle(update.Left + updateText.Left, update.Top + updateText.Top, updateText.Width, updateText.Height);
                     Rectangle button = new Rectangle(update.Left + updateButton.Left, update.Top + updateButton.Top, updateButton.Width, updateButton.Height);
                     Rectangle dismiss = new Rectangle(update.Left + updateDismiss.Left, update.Top + updateDismiss.Top, updateDismiss.Width, updateDismiss.Height);
-                    check(update.Visible && updateText.Text == "Update v0.9.15 available" && updateText.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the update bar names the new version in gold");
+                    check(update.Visible && updateText.Text == "Update v0.9.16 available" && updateText.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the update bar names the new version in gold");
                     check(updateButton.Text == "Update" && updateDismiss.Text == "\u00d7", "the update bar has an Update button and a dismiss mark");
                     check(client.Contains(update.Bounds) && client.Contains(text) && client.Contains(button) && client.Contains(dismiss), "the update bar sits inside the clue panel");
                     check(!text.IntersectsWith(button) && !button.IntersectsWith(dismiss) && text.Right <= button.Left && button.Right <= dismiss.Left, "the update text, button and dismiss mark do not overlap");

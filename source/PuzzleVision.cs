@@ -17,6 +17,9 @@ namespace KavrosClueHelper
         public PuzzleKind Kind;
         public Rectangle Bounds, Grid;
         public float Scale;
+        // DarkScape lockbox tiles are 32px with the grey border a few pixels
+        // inside the 30px icon match. Zero keeps the Modern icon box.
+        public int TileInsetX, TileInsetY, TileSize;
         public int[] Board;
         public TowerPuzzle Towers;
         public List<int[]> TowerSolutions;
@@ -1341,11 +1344,12 @@ namespace KavrosClueHelper
                     double[] fingerprint=pixels.Fingerprint(new Rectangle(i%5*38,i/5*38,30,30),6,6,false);
                     double[] brightness=Enumerable.Range(0,36).Select(n=>(fingerprint[n*3]+fingerprint[n*3+1]+fingerprint[n*3+2])/3).ToArray();
                     if(brightness.Max()-brightness.Min()<45) return null;
-                    var best=ActiveLockboxReferences().Select(r=>new {Value=r.Key,Score=Pixels.Similarity(fingerprint,r.Value,false)}).OrderByDescending(m=>m.Score).First();
-                    if(best.Score<threshold) return null;
-                    board[i]=best.Value; minimum=Math.Min(minimum,best.Score);
+                    double score;
+                    int symbol=MatchLockboxSymbol(fingerprint,threshold,out score);
+                    if(symbol<0) return null;
+                    board[i]=symbol; minimum=Math.Min(minimum,score);
                 }
-                return new DetectedPuzzle {Kind=PuzzleKind.Lockbox,Bounds=bounds,Grid=grid,Scale=scale,Board=board,Confidence=minimum};
+                return new DetectedPuzzle {Kind=PuzzleKind.Lockbox,Bounds=bounds,Grid=grid,Scale=scale,Board=board,Confidence=minimum,TileInsetY=darkscapeInterface?3:0,TileSize=darkscapeInterface?32:0};
             }
         }
         internal const int LiveLockboxSlice = 160;
@@ -1417,9 +1421,59 @@ namespace KavrosClueHelper
             if(!complete){lockScaleCursor=0;lockIconCursor=0;}
             return null;
         }
+        private List<KeyValuePair<int, double[]>> activeLockboxCache;
+        private bool activeLockboxCacheDark, activeLockboxCacheReady;
         private List<KeyValuePair<int, double[]>> ActiveLockboxReferences()
         {
-            return darkscapeInterface ? darkscapeLockboxReferences : modernLockboxReferences;
+            if (activeLockboxCacheReady && activeLockboxCacheDark == darkscapeInterface) return activeLockboxCache;
+            activeLockboxCacheDark = darkscapeInterface;
+            activeLockboxCacheReady = true;
+            if (!darkscapeInterface) { activeLockboxCache = modernLockboxReferences; return activeLockboxCache; }
+            // A hovered DarkScape tile and its four neighbours turn blue, the same
+            // art as the Modern tiles, with a white border. Score both sets.
+            var both = new List<KeyValuePair<int, double[]>>(darkscapeLockboxReferences.Count + modernLockboxReferences.Count);
+            both.AddRange(darkscapeLockboxReferences);
+            both.AddRange(modernLockboxReferences);
+            activeLockboxCache = both;
+            return both;
+        }
+        private int MatchLockboxSymbol(double[] fingerprint, double threshold, out double score)
+        {
+            List<KeyValuePair<int, double[]>> refs = ActiveLockboxReferences();
+            double[] classScore = { -1, -1, -1 };
+            for (int r = 0; r < refs.Count; r++)
+            {
+                int key = refs[r].Key;
+                if (key < 0 || key > 2) continue;
+                double s = LockboxSimilarity(fingerprint, refs[r].Value);
+                if (s > classScore[key]) classScore[key] = s;
+            }
+            int bestClass = 0;
+            if (classScore[1] > classScore[bestClass]) bestClass = 1;
+            if (classScore[2] > classScore[bestClass]) bestClass = 2;
+            score = classScore[bestClass];
+            return score >= threshold ? bestClass : -1;
+        }
+        // The white hover border and the cursor are brighter than the tile.
+        // On DarkScape, ignore those blocks so the symbol underneath still matches.
+        private double LockboxSimilarity(double[] sample, double[] reference)
+        {
+            if (sample == null || reference == null || sample.Length != reference.Length || sample.Length < 3) return 0;
+            int blocks = sample.Length / 3;
+            double full = 0, bright = 0;
+            int kept = 0;
+            for (int i = 0; i < blocks; i++)
+            {
+                int o = i * 3;
+                double sl = (sample[o] + sample[o + 1] + sample[o + 2]) / 3;
+                double rl = (reference[o] + reference[o + 1] + reference[o + 2]) / 3;
+                double block = (Math.Max(0, 1 - Math.Abs(sample[o] - reference[o]) / 128) + Math.Max(0, 1 - Math.Abs(sample[o + 1] - reference[o + 1]) / 128) + Math.Max(0, 1 - Math.Abs(sample[o + 2] - reference[o + 2]) / 128)) / 3;
+                full += block;
+                if (!darkscapeInterface || sl - rl < 30) { bright += block; kept++; }
+            }
+            full /= blocks;
+            if (!darkscapeInterface || kept < 18) return full;
+            return Math.Max(full, bright / kept);
         }
         private bool LockboxSurface(Pixels p,Point origin,float scale)
         {
@@ -1430,7 +1484,8 @@ namespace KavrosClueHelper
                 Rectangle tile=new Rectangle(origin.X+(int)Math.Round(cell%5*38*scale),origin.Y+(int)Math.Round(cell/5*38*scale),(int)Math.Round(30*scale),(int)Math.Round(30*scale));
                 double[] fp=p.Fingerprint(tile,6,6,false);double low=255,high=0;
                 for(int i=0;i<36;i++){double value=(fp[i*3]+fp[i*3+1]+fp[i*3+2])/3;low=Math.Min(low,value);high=Math.Max(high,value);}
-                if(high-low<30||!ActiveLockboxReferences().Any(r=>Pixels.Similarity(fp,r.Value,false)>=0.80))return false;
+                double score;
+                if(high-low<30||MatchLockboxSymbol(fp,0.80,out score)<0)return false;
             }
             return true;
         }

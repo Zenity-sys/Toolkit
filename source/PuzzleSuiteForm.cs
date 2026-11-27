@@ -415,7 +415,13 @@ namespace KavrosClueHelper
         internal void CheckForUpdatesOnStartup(){if(preferences.CheckForUpdates)AppUpdates.Check(this,false);}
         internal void PrepareForUpdate(){closing=true;}
         internal void SetUpdateStatus(string message){status.Text=message;}
-        private void OpenPanel(){draw.Checked=true;floatingEnabled.Checked=true;UpdateFloatingPanel();}
+        internal void OpenPanel()
+        {
+            if(floatingPanel!=null&&!floatingPanel.IsDisposed)floatingPanel.Expand();
+            draw.Checked=true;floatingEnabled.Checked=true;UpdateFloatingPanel();
+        }
+        internal bool PanelCollapsed { get { return floatingPanel != null && !floatingPanel.IsDisposed && floatingPanel.Collapsed; } }
+        internal int PanelClientHeight { get { return floatingPanel == null || floatingPanel.IsDisposed ? 0 : floatingPanel.ClientSize.Height; } }
         private void ExitHelper(){closing=true;Close();}
         private bool trackedVisible;
         private void UpdateFloatingPanel()
@@ -1119,7 +1125,7 @@ namespace KavrosClueHelper
                     }
                 }
                 Rectangle body=p.Bounds,grid=p.Grid; body.Offset(job.CaptureOffset); grid.Offset(job.CaptureOffset);
-                DetectedPuzzle puzzle=new DetectedPuzzle { Kind=p.Kind,Bounds=body,Grid=grid,Scale=p.Scale,Board=p.Board,Towers=p.Towers,Knot=p.Knot,Master=p.Master,Compass=p.Compass,Scan=p.Scan,Theme=p.Theme,Message=p.Message,Confidence=p.Confidence };
+                DetectedPuzzle puzzle=new DetectedPuzzle { Kind=p.Kind,Bounds=body,Grid=grid,Scale=p.Scale,Board=p.Board,Towers=p.Towers,Knot=p.Knot,Master=p.Master,Compass=p.Compass,Scan=p.Scan,Theme=p.Theme,Message=p.Message,Confidence=p.Confidence,TileInsetX=p.TileInsetX,TileInsetY=p.TileInsetY,TileSize=p.TileSize };
                 puzzleDetails=puzzle.Kind+"; "+puzzle.Bounds+"; scale "+puzzle.Scale+"; confidence "+puzzle.Confidence.ToString("0.000");
                 if(puzzle.Kind==PuzzleKind.Towers && puzzle.Towers!=null && puzzle.Towers.Top!=null && puzzle.Towers.Bottom!=null && puzzle.Towers.Left!=null && puzzle.Towers.Right!=null) puzzleDetails+="; clues "+String.Join(",",puzzle.Towers.Top.Concat(puzzle.Towers.Bottom).Concat(puzzle.Towers.Left).Concat(puzzle.Towers.Right));
                 if(puzzle.Kind==PuzzleKind.Compass)puzzleDetails+="; "+puzzle.Compass.Heading+"; arrow pixels "+puzzle.Compass.Pixels+"; error "+(puzzle.Compass.Error*180/Math.PI).ToString("0.000")+" degrees; bearings "+compassSession.Bearings.Count;

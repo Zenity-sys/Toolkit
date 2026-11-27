@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -81,6 +84,11 @@ namespace KavrosClueHelper
                     if (analyzed != null && analyzed.Board != null)
                         foreach (int cell in analyzed.Board) { if (cell == 2) hats++; else if (cell == 1) bows++; else if (cell == 0) swords++; }
                     check(hats == 16 && bows == 5 && swords == 4, "the capture is 16 wizard hats, 5 bows and 4 swords (" + hats + "/" + bows + "/" + swords + ")");
+                    if (analyzed != null)
+                    {
+                        Rectangle modernBox = GuidanceDrawing.Cell(analyzed, 0);
+                        check(analyzed.TileSize == 0 && modernBox.Width == 30 && modernBox.Height == 30 && modernBox.X == analyzed.Grid.X && modernBox.Y == analyzed.Grid.Y, "Modern lockbox boxes stay on the 30px icon grid");
+                    }
                 }
                 string dark = Path.Combine(assets, "test_assets", "lockbox", "darkscape-1920.png");
                 check(File.Exists(dark), "the DarkScape lockbox capture is in the test assets");
@@ -112,6 +120,8 @@ namespace KavrosClueHelper
                     if (found != null && found.Board != null)
                         foreach (int cell in found.Board) { if (cell == 2) hats++; else if (cell == 1) bows++; else if (cell == 0) swords++; }
                     check(hats == 11 && bows == 8 && swords == 6, "the DarkScape capture is 11 wizard hats, 8 bows and 6 swords (" + hats + "/" + bows + "/" + swords + ")");
+                    if (found != null) Centre(check, image, found);
+                    if (found != null) HoverClick(check, assets, image, found);
                 }
                 File.AppendAllText(report, "LOCKBOX LIVE PASS: " + count + " assertions.\r\n");
                 return 0;
@@ -157,6 +167,140 @@ namespace KavrosClueHelper
             check(confirm.Accept(shown.Key, bad.Key), "the same corrupted frame can replace the board once it repeats");
             check(!LockboxStep.SkipConfirm(shown, BoardAt(once, new Rectangle(400, 400, 198, 198), new Rectangle(408, 408, 182, 182)), 1), "a click on a different grid still confirms");
             check(LockboxStep.RereadMilliseconds <= 40, "a locked lockbox is read again within 40 ms");
+        }
+        static void Centre(Action<bool, string> check, Bitmap image, DetectedPuzzle found)
+        {
+            check(found.TileSize == 32 && found.TileInsetY == 3 && found.TileInsetX == 0, "DarkScape lockbox boxes use the 32px tile");
+            for (int i = 0; i < 25; i++)
+            {
+                int originX = found.Grid.X + (int)Math.Round(i % 5 * 38 * found.Scale);
+                int originY = found.Grid.Y + (int)Math.Round(i / 5 * 38 * found.Scale);
+                int borderX = -1, borderY = -1;
+                for (int y = originY; y < originY + 12 && y < image.Height; y++)
+                {
+                    int run = 0;
+                    for (int x = Math.Max(0, originX - 2); x < originX + 36 && x < image.Width; x++) if (TileBorder(image.GetPixel(x, y))) run++;
+                    if (run >= 28) { borderY = y; break; }
+                }
+                for (int x = Math.Max(0, originX - 2); x < originX + 8 && x < image.Width; x++)
+                {
+                    int run = 0;
+                    for (int y = originY; y < originY + 40 && y < image.Height; y++) if (TileBorder(image.GetPixel(x, y))) run++;
+                    if (run >= 16) { borderX = x; break; }
+                }
+                Rectangle box = GuidanceDrawing.Cell(found, i);
+                int boxX = box.X + box.Width / 2, boxY = box.Y + box.Height / 2;
+                check(borderX >= 0 && borderY >= 0 && box.Width == 32 && box.Height == 32 && Math.Abs(boxX - (borderX + 16)) <= 1 && Math.Abs(boxY - (borderY + 16)) <= 1, "DarkScape lockbox cell " + i + " is centred on the tile (" + box.X + "," + box.Y + " " + box.Width + "x" + box.Height + " vs border " + borderX + "," + borderY + ")");
+            }
+        }
+        static bool TileBorder(Color c)
+        {
+            return c.R >= 95 && c.R <= 125 && c.G >= 95 && c.G <= 125 && c.B >= 105 && c.B <= 140 && Math.Abs(c.R - c.G) <= 12;
+        }
+        static void HoverClick(Action<bool, string> check, string assets, Bitmap image, DetectedPuzzle found)
+        {
+            Solution before = LockboxSolver.Solve(found.Board, 1);
+            int index = -1;
+            for (int i = 0; i < 25; i++)
+            {
+                if (before.Clicks[i] <= 0) continue;
+                if (index < 0) index = i;
+                if (Cross(i).Contains(4) || Cross(i).Contains(20) || Cross(i).Contains(24)) { index = i; break; }
+            }
+            check(index >= 0 && before.Clicks[index] > 0, "the DarkScape board has a tile that still needs a click");
+            if (index < 0) return;
+            using (Bitmap hover = Copy(image))
+            {
+                PaintCross(hover, assets, found, found.Board, index);
+                var fresh = new PuzzleDetector(assets);
+                fresh.UseDarkscape(true);
+                DetectedPuzzle opened = null;
+                for (int tick = 0; tick < 5 && (opened == null || opened.Board == null); tick++)
+                    opened = fresh.DetectBoards(hover, new Pixels(hover), true, true);
+                check(opened != null && opened.Board != null && opened.Board.SequenceEqual(found.Board), "a highlighted DarkScape cross still reads all 25 symbols " + Board(opened));
+            }
+            int[] next = (int[])found.Board.Clone();
+            LockboxSolver.Click(next, index, 1, 1);
+            using (Bitmap clicked = Copy(image))
+            {
+                PaintCross(clicked, assets, found, next, index);
+                var reader = new PuzzleDetector(assets);
+                reader.UseDarkscape(true);
+                DetectedPuzzle read = reader.ReadAgain(clicked, found);
+                check(read != null && read.Board != null && read.Board.SequenceEqual(next), "the highlighted click is read on frame 1 " + Board(read));
+                check(read != null && LockboxStep.SkipConfirm(found, read, 1), "a DarkScape click counts down without a second frame");
+                if (read != null && read.Board != null)
+                {
+                    Solution after = LockboxSolver.Solve(read.Board, 1);
+                    check(after.Clicks[index] == before.Clicks[index] - 1, "the clicked tile's number counts down on frame 1 (" + before.Clicks[index] + " to " + after.Clicks[index] + ")");
+                }
+            }
+        }
+        static Bitmap Copy(Bitmap image)
+        {
+            Bitmap copy = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
+            using (Graphics g = Graphics.FromImage(copy)) g.DrawImage(image, 0, 0);
+            return copy;
+        }
+        static int[] Cross(int index)
+        {
+            var cells = new List<int> { index };
+            int row = index / 5, column = index % 5;
+            if (row > 0) cells.Add(index - 5);
+            if (row < 4) cells.Add(index + 5);
+            if (column > 0) cells.Add(index - 1);
+            if (column < 4) cells.Add(index + 1);
+            return cells.ToArray();
+        }
+        static void PaintCross(Bitmap image, string assets, DetectedPuzzle found, int[] symbols, int clicked)
+        {
+            string[] names = { "melee", "range", "mage" };
+            int[] cells = Cross(clicked);
+            for (int n = 0; n < cells.Length; n++)
+            {
+                int cell = cells[n];
+                int sampleX = found.Grid.X + (int)Math.Round(cell % 5 * 38 * found.Scale);
+                int sampleY = found.Grid.Y + (int)Math.Round(cell / 5 * 38 * found.Scale);
+                int tileX = sampleX + (int)Math.Round(found.TileInsetX * found.Scale);
+                int tileY = sampleY + (int)Math.Round(found.TileInsetY * found.Scale);
+                int tile = Math.Max(1, (int)Math.Round((found.TileSize > 0 ? found.TileSize : 32) * found.Scale));
+                for (int y = 0; y < tile; y++) for (int x = 0; x < tile; x++)
+                {
+                    int px = tileX + x, py = tileY + y;
+                    if (px < 0 || py < 0 || px >= image.Width || py >= image.Height) continue;
+                    double t = (x + y) / (double)Math.Max(1, tile * 2 - 2);
+                    image.SetPixel(px, py, Color.FromArgb(33 + (int)Math.Round(16 * t), 43 + (int)Math.Round(27 * t), 77 + (int)Math.Round(16 * t)));
+                }
+                string path = Path.Combine(assets, "alt1anchors", "lockbox_tiles", names[symbols[cell]] + ".png");
+                using (Bitmap icon = new Bitmap(path))
+                using (Graphics g = Graphics.FromImage(image))
+                {
+                    g.InterpolationMode = InterpolationMode.NearestNeighbor;
+                    g.PixelOffsetMode = PixelOffsetMode.Half;
+                    g.DrawImage(icon, new Rectangle(sampleX, sampleY, icon.Width, icon.Height), new Rectangle(0, 0, icon.Width, icon.Height), GraphicsUnit.Pixel);
+                }
+                for (int x = 0; x < tile; x++)
+                {
+                    Paint(image, tileX + x, tileY, Color.White);
+                    Paint(image, tileX + x, tileY + tile - 1, Color.White);
+                }
+                for (int y = 0; y < tile; y++)
+                {
+                    Paint(image, tileX, tileY + y, Color.White);
+                    Paint(image, tileX + tile - 1, tileY + y, Color.White);
+                }
+            }
+            int cursorX = found.Grid.X + (int)Math.Round((clicked % 5 * 38 + 12) * found.Scale);
+            int cursorY = found.Grid.Y + (int)Math.Round((clicked / 5 * 38 + 8) * found.Scale);
+            for (int y = 0; y < 14; y++) for (int x = 0; x <= y && x < 9; x++)
+            {
+                Color ink = (x == 0 || x == y || y == 13) ? Color.FromArgb(12, 12, 12) : Color.FromArgb(248, 248, 248);
+                Paint(image, cursorX + x, cursorY + y, ink);
+            }
+        }
+        static void Paint(Bitmap image, int x, int y, Color colour)
+        {
+            if (x >= 0 && y >= 0 && x < image.Width && y < image.Height) image.SetPixel(x, y, colour);
         }
         static DetectedPuzzle BoardAt(int[] board, Rectangle bounds, Rectangle grid)
         {

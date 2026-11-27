@@ -1,5 +1,12 @@
 # Kavros Clue Helper
 
+## 0.9.16
+
+**Puzzles**
+- Clicking Clue Helper in Companion opens the floating panel full size, even when it was collapsed.
+- DarkScape lockbox boxes line up with the tiles.
+- DarkScape lockbox click numbers count down as soon as you click, including while the tile and its neighbours are highlighted.
+
 ## 0.9.15
 
 **Puzzles**
