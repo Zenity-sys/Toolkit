@@ -13,6 +13,7 @@ namespace KavrosClueHelper
         internal const string RepositoryUrl = "https://github.com/Zenity-sys/kavros-clue-helper";
         internal static string RestartedVersion;
         internal static Action<string, bool, string, Action> Present;
+        internal static Action<string> OfferPending;
         private static int busy;
 
         internal static void Start()
@@ -58,6 +59,12 @@ namespace KavrosClueHelper
                     return;
                 }
                 string version = AppBranding.Shown(info.TargetFullRelease.Version.ToString());
+                Action<string> pending = OfferPending;
+                if (pending != null)
+                {
+                    try { pending(version); }
+                    catch (Exception ex) { CrashLog.Write(ex); }
+                }
                 Tell(owner, "Update ready. Click to restart.", false, "Restart", delegate
                 {
                     ThreadPool.QueueUserWorkItem(delegate

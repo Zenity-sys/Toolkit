@@ -1,5 +1,14 @@
 # Kavros Clue Helper
 
+## 0.9.14
+
+**Puzzles**
+- DarkScape lockboxes are found and read, including on the first look.
+- DarkScape treasure maps are found and matched when DarkScape is selected.
+- Settings has three interface buttons: Modern, DarkScape, and Legacy. A saved Modern or Legacy choice stays as it was.
+- The clue panel shows a slim update bar when a newer version is ready, without taking focus from Kavros.
+- Auto capture stays on the game client. Notepad, browsers, and other programs are not selected just because Kavros is in the window title.
+
 ## 0.9.13
 
 **Puzzles**

@@ -35,6 +35,7 @@ namespace KavrosClueHelper
                 if(args.Length>1&&args[0]=="--knot-capture-test")return KnotCaptureTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--whats-new-test")return ReleaseBannerTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--focus-test")return FocusSurfaceTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--darkscape-clue-test")return DarkscapeClueTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--lockbox-live-test")return LockboxLiveTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--steady-test")return SteadyTrackingTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--reliability-test")return ReliabilityRegressionTests.Run(args[1]);

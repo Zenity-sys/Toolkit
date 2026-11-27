@@ -41,7 +41,7 @@ namespace KavrosClueHelper
                 Check(Math.Abs(PuzzleDetector.SearchOrder(1351, 192)[0] - 2.5F) < 0.02F, "1440p at 200% searches 2.5 first");
                 Check(Math.Abs(PuzzleDetector.SearchOrder(1369, 96, 1080, 100, 1440, 125)[0] - 1F) < 0.02F, "a manual 1080p choice overrides the window height");
                 Check(Math.Abs(PuzzleDetector.SearchOrder(0, 0, 0, 0, 1440, 125)[0] - 1.75F) < 0.02F, "auto with no window uses the last manual 1440p and 125%");
-                Check(AppBranding.Shown("0.8.0") == "v0.8" && AppBranding.Shown("v0.8.0") == "v0.8" && AppBranding.Shown(new Version(0, 8, 0, 0)) == "v0.8" && AppBranding.Shown("0.8.1") == "v0.8.1" && AppBranding.Shown("v0.8.1") == "v0.8.1" && AppBranding.Shown(new Version(0, 8, 1, 0)) == "v0.8.1" && AppBranding.Shown("0.9.0") == "v0.9" && AppBranding.Shown(new Version(0, 9, 0, 0)) == "v0.9" && AppBranding.Shown("0.9.1") == "v0.9.1" && AppBranding.Shown(new Version(0, 9, 1, 0)) == "v0.9.1" && AppBranding.Shown("0.9.2") == "v0.9.2" && AppBranding.Shown(new Version(0, 9, 2, 0)) == "v0.9.2" && AppBranding.Shown("0.9.3") == "v0.9.3" && AppBranding.Shown(new Version(0, 9, 3, 0)) == "v0.9.3" && AppBranding.Shown("0.9.4") == "v0.9.4" && AppBranding.Shown(new Version(0, 9, 4, 0)) == "v0.9.4" && AppBranding.Shown("0.9.5") == "v0.9.5" && AppBranding.Shown(new Version(0, 9, 5, 0)) == "v0.9.5" && AppBranding.Shown("0.9.6") == "v0.9.6" && AppBranding.Shown(new Version(0, 9, 6, 0)) == "v0.9.6" && AppBranding.Shown("0.9.7") == "v0.9.7" && AppBranding.Shown(new Version(0, 9, 7, 0)) == "v0.9.7" && AppBranding.Shown("0.9.8") == "v0.9.8" && AppBranding.Shown(new Version(0, 9, 8, 0)) == "v0.9.8" && AppBranding.Shown("0.9.9") == "v0.9.9" && AppBranding.Shown(new Version(0, 9, 9, 0)) == "v0.9.9" && AppBranding.Shown("0.9.10") == "v0.9.10" && AppBranding.Shown(new Version(0, 9, 10, 0)) == "v0.9.10" && AppBranding.Shown("0.9.11") == "v0.9.11" && AppBranding.Shown(new Version(0, 9, 11, 0)) == "v0.9.11" && AppBranding.Shown("0.9.12") == "v0.9.12" && AppBranding.Shown(new Version(0, 9, 12, 0)) == "v0.9.12" && AppBranding.Shown("0.9.13") == "v0.9.13" && AppBranding.Shown(new Version(0, 9, 13, 0)) == "v0.9.13", "a zero patch shows major.minor and any other patch shows three parts");
+                Check(AppBranding.Shown("0.8.0") == "v0.8" && AppBranding.Shown("v0.8.0") == "v0.8" && AppBranding.Shown(new Version(0, 8, 0, 0)) == "v0.8" && AppBranding.Shown("0.8.1") == "v0.8.1" && AppBranding.Shown("v0.8.1") == "v0.8.1" && AppBranding.Shown(new Version(0, 8, 1, 0)) == "v0.8.1" && AppBranding.Shown("0.9.0") == "v0.9" && AppBranding.Shown(new Version(0, 9, 0, 0)) == "v0.9" && AppBranding.Shown("0.9.1") == "v0.9.1" && AppBranding.Shown(new Version(0, 9, 1, 0)) == "v0.9.1" && AppBranding.Shown("0.9.2") == "v0.9.2" && AppBranding.Shown(new Version(0, 9, 2, 0)) == "v0.9.2" && AppBranding.Shown("0.9.3") == "v0.9.3" && AppBranding.Shown(new Version(0, 9, 3, 0)) == "v0.9.3" && AppBranding.Shown("0.9.4") == "v0.9.4" && AppBranding.Shown(new Version(0, 9, 4, 0)) == "v0.9.4" && AppBranding.Shown("0.9.5") == "v0.9.5" && AppBranding.Shown(new Version(0, 9, 5, 0)) == "v0.9.5" && AppBranding.Shown("0.9.6") == "v0.9.6" && AppBranding.Shown(new Version(0, 9, 6, 0)) == "v0.9.6" && AppBranding.Shown("0.9.7") == "v0.9.7" && AppBranding.Shown(new Version(0, 9, 7, 0)) == "v0.9.7" && AppBranding.Shown("0.9.8") == "v0.9.8" && AppBranding.Shown(new Version(0, 9, 8, 0)) == "v0.9.8" && AppBranding.Shown("0.9.9") == "v0.9.9" && AppBranding.Shown(new Version(0, 9, 9, 0)) == "v0.9.9" && AppBranding.Shown("0.9.10") == "v0.9.10" && AppBranding.Shown(new Version(0, 9, 10, 0)) == "v0.9.10" && AppBranding.Shown("0.9.11") == "v0.9.11" && AppBranding.Shown(new Version(0, 9, 11, 0)) == "v0.9.11" && AppBranding.Shown("0.9.12") == "v0.9.12" && AppBranding.Shown(new Version(0, 9, 12, 0)) == "v0.9.12" && AppBranding.Shown("0.9.13") == "v0.9.13" && AppBranding.Shown(new Version(0, 9, 13, 0)) == "v0.9.13" && AppBranding.Shown("0.9.14") == "v0.9.14" && AppBranding.Shown(new Version(0, 9, 14, 0)) == "v0.9.14", "a zero patch shows major.minor and any other patch shows three parts");
                 Rectangle scanGuide = FloatingCluePanel.ScanGuideBounds();
                 Rectangle scanControls = FloatingCluePanel.ScanControlBounds(88);
                 int scanFooter = FloatingCluePanel.ScanFooterTop(88);
@@ -51,7 +51,7 @@ namespace KavrosClueHelper
                 try
                 {
                     var prefs = new OverlayPreferences(prefsPath);
-                    Check(!prefs.LegacyInterface && prefs.Resolution == 0 && prefs.Scaling == 0 && prefs.ResolutionManual == 1080 && prefs.ScalingManual == 100, "settings default to Modern / DarkScape and Auto");
+                    Check(!prefs.LegacyInterface && !prefs.DarkscapeInterface && prefs.Resolution == 0 && prefs.Scaling == 0 && prefs.ResolutionManual == 1080 && prefs.ScalingManual == 100, "settings default to Modern and Auto");
                     prefs.LegacyInterface = true;
                     prefs.Resolution = 1440;
                     prefs.Scaling = 125;
@@ -59,7 +59,17 @@ namespace KavrosClueHelper
                     prefs.ScalingManual = 125;
                     prefs.Save();
                     var loaded = new OverlayPreferences(prefsPath);
-                    Check(loaded.LegacyInterface && loaded.Resolution == 1440 && loaded.Scaling == 125 && loaded.ResolutionManual == 1440 && loaded.ScalingManual == 125, "interface, resolution and scaling round-trip in overlay.txt");
+                    Check(loaded.LegacyInterface && !loaded.DarkscapeInterface && loaded.Resolution == 1440 && loaded.Scaling == 125 && loaded.ResolutionManual == 1440 && loaded.ScalingManual == 125, "interface, resolution and scaling round-trip in overlay.txt");
+                    loaded.LegacyInterface = false;
+                    loaded.DarkscapeInterface = true;
+                    loaded.Save();
+                    var dark = new OverlayPreferences(prefsPath);
+                    Check(!dark.LegacyInterface && dark.DarkscapeInterface, "DarkScape is saved on its own");
+                    File.WriteAllText(prefsPath, "interface\tlegacy\r\n");
+                    Check(new OverlayPreferences(prefsPath).LegacyInterface && !new OverlayPreferences(prefsPath).DarkscapeInterface, "a saved Legacy choice stays Legacy");
+                    File.WriteAllText(prefsPath, "interface\tmodern\r\n");
+                    OverlayPreferences modern = new OverlayPreferences(prefsPath);
+                    Check(!modern.LegacyInterface && !modern.DarkscapeInterface, "a saved Modern choice stays Modern");
                 }
                 finally { try { if (File.Exists(prefsPath)) File.Delete(prefsPath); } catch (IOException) { } }
                 string preferred = LodestoneIcons.Resolve(assets, "Lumbridge lodestone");

@@ -682,15 +682,18 @@ namespace KavrosClueHelper
         private readonly ReferenceClueReader referenceClues;
         private readonly CompassVision compass;
         private readonly ScanVision scans;
-        private readonly List<KeyValuePair<int, double[]>> lockboxReferences = new List<KeyValuePair<int, double[]>>();
+        private readonly List<KeyValuePair<int, double[]>> modernLockboxReferences = new List<KeyValuePair<int, double[]>>();
+        private readonly List<KeyValuePair<int, double[]>> darkscapeLockboxReferences = new List<KeyValuePair<int, double[]>>();
         private readonly Dictionary<float, ImagePattern[]> patterns = new Dictionary<float, ImagePattern[]>();
         private readonly Dictionary<float, ImagePattern[]> lockboxPatterns = new Dictionary<float, ImagePattern[]>();
+        private readonly Dictionary<float, ImagePattern> darkscapeClose = new Dictionary<float, ImagePattern>();
         private readonly Dictionary<float, OldFrame[]> oldFrames = new Dictionary<float, OldFrame[]>();
         private readonly Dictionary<float, ImagePattern[]> oldSliderAnchors = new Dictionary<float, ImagePattern[]>();
         private readonly Dictionary<float, OldFrame[]> blockyFrames = new Dictionary<float, OldFrame[]>();
         private readonly Dictionary<float, ImagePattern[]> blockySliders = new Dictionary<float, ImagePattern[]>();
         private int activeDpi = 96;
         private bool legacyInterface;
+        private bool darkscapeInterface;
         private int resolutionChoice;
         private int scalingChoice;
         private int resolutionManual = 1080;
@@ -791,17 +794,25 @@ namespace KavrosClueHelper
             referenceClues=new ReferenceClueReader(directory);referenceClues.Progress=message=>{if(Progress!=null)Progress(message);};
             scans=new ScanVision(directory);
             compass.Progress=scans.Progress=message=>{if(Progress!=null)Progress(message);};
-            string[] lockNames = { "melee", "range", "mage", "melee_active", "range_active", "mage_active" };
+            // DarkScape tiles use the same three symbols on a warm brown background.
+            // Idle and highlighted copies both map back to melee, range, or mage.
+            string[] lockNames = { "melee", "range", "mage", "melee_active", "range_active", "mage_active", "darkscape_melee", "darkscape_range", "darkscape_mage", "darkscape_melee_active", "darkscape_range_active", "darkscape_mage_active" };
             for (int i = 0; i < lockNames.Length; i++) using (Bitmap icon = new Bitmap(Path.Combine(directory, "alt1anchors", "lockbox_tiles", lockNames[i] + ".png")))
-                lockboxReferences.Add(new KeyValuePair<int, double[]>(i % 3, new Pixels(icon).Fingerprint(new Rectangle(0, 0, 30, 30), 6, 6, false)));
+            {
+                List<KeyValuePair<int, double[]>> bucket = i < 6 ? modernLockboxReferences : darkscapeLockboxReferences;
+                bucket.Add(new KeyValuePair<int, double[]>(i % 3, new Pixels(icon).Fingerprint(new Rectangle(0, 0, 30, 30), 6, 6, false)));
+            }
             foreach (float scale in scales)
             {
-                lockboxPatterns[scale] = new[]{"melee","range","mage"}.Select(name => {
+                lockboxPatterns[scale] = new[]{"melee","range","mage","darkscape_melee","darkscape_range","darkscape_mage"}.Select(name => {
                     using(Bitmap original=new Bitmap(Path.Combine(assets,"alt1anchors","lockbox_tiles",name+".png")))
                     using(Bitmap resized=Pixels.Crop(original,new Rectangle(Point.Empty,original.Size),new Size((int)Math.Round(30*scale),(int)Math.Round(30*scale)))) return new ImagePattern(resized);
                 }).ToArray();
                 string[] names = { "modal/top_left.png", "modal/top_right.png", "modal/bot_left.png", "sliders/eoc_x.png" };
                 patterns[scale] = names.Select(name => { using (Bitmap original = new Bitmap(Path.Combine(assets, "alt1anchors", name))) using (Bitmap scaled = Pixels.Crop(original, new Rectangle(Point.Empty, original.Size), new Size((int)Math.Round(original.Width * scale), (int)Math.Round(original.Height * scale)))) return new ImagePattern(scaled); }).ToArray();
+                using (Bitmap close = new Bitmap(Path.Combine(assets, "alt1anchors", "darkscape", "close.png")))
+                using (Bitmap closeScaled = Pixels.Crop(close, new Rectangle(Point.Empty, close.Size), new Size(Math.Max(8, (int)Math.Round(close.Width * scale)), Math.Max(8, (int)Math.Round(close.Height * scale)))))
+                    darkscapeClose[scale] = new ImagePattern(closeScaled);
                 oldFrames[scale] = new[] {
                     new OldFrame { TopLeft = OldPattern("eoctopleft.png", scale), Close = OldPattern("eocx.png", scale), BottomLeft = OldPattern("eocbotleft.png", scale), TopLeftOffset = new Point(4,29), CloseOffset = new Point(10,24), BottomOffset = new Point(3,7) },
                     new OldFrame { TopLeft = OldPattern("legacytopleft.png", scale), Close = OldPattern("legacyx.png", scale), BottomLeft = OldPattern("legacybotleft.png", scale), TopLeftOffset = new Point(4,29), CloseOffset = new Point(19,20), BottomOffset = new Point(6,-2) }
@@ -816,13 +827,24 @@ namespace KavrosClueHelper
         }
         public void UseLegacy(bool legacy)
         {
-            UseClient(legacy, resolutionChoice, scalingChoice, resolutionManual, scalingManual, clientHeight);
+            UseClient(legacy, resolutionChoice, scalingChoice, resolutionManual, scalingManual, clientHeight, false);
+        }
+        public void UseDarkscape(bool enabled)
+        {
+            UseClient(enabled ? false : legacyInterface, resolutionChoice, scalingChoice, resolutionManual, scalingManual, clientHeight, enabled);
         }
         public void UseClient(bool legacy, int resolution, int scaling, int manualResolution, int manualScaling, int height)
         {
-            if (legacy != legacyInterface || resolution != resolutionChoice || scaling != scalingChoice || manualResolution != resolutionManual || manualScaling != scalingManual || height != clientHeight)
+            UseClient(legacy, resolution, scaling, manualResolution, manualScaling, height, false);
+        }
+        public void UseClient(bool legacy, int resolution, int scaling, int manualResolution, int manualScaling, int height, bool darkscape)
+        {
+            bool skin = darkscape && !legacy;
+            if (legacy != legacyInterface || skin != darkscapeInterface || resolution != resolutionChoice || scaling != scalingChoice || manualResolution != resolutionManual || manualScaling != scalingManual || height != clientHeight)
                 nextSearchScale = 0;
+            if (skin != darkscapeInterface) { lockScaleCursor = 0; lockIconCursor = 0; }
             legacyInterface = legacy;
+            darkscapeInterface = skin;
             resolutionChoice = resolution;
             scalingChoice = scaling;
             if (manualResolution == 1080 || manualResolution == 1440 || manualResolution == 2160) resolutionManual = manualResolution;
@@ -1064,7 +1086,9 @@ namespace KavrosClueHelper
         {
             LastScrollFast = false;
             LastScrollBounds = Rectangle.Empty;
-            var scrolls = ParagraphVision.FindScrolls(pixels);
+            // DarkScape parchment has a brown frame and a gold close button, not
+            // the modern full-width title bar. Each mode searches only its own.
+            var scrolls = darkscapeInterface ? ParagraphVision.FindDarkscapeScrolls(pixels) : ParagraphVision.FindScrolls(pixels);
             if (scrolls == null || scrolls.Count == 0) return null;
             LastScrollFast = true;
             LastScrollBounds = scrolls[0];
@@ -1074,9 +1098,11 @@ namespace KavrosClueHelper
         private DetectedPuzzle FindAtScale(Bitmap screenshot,Pixels pixels,float scale,System.Diagnostics.Stopwatch clock,int budget)
         {
             if(clock!=null&&clock.ElapsedMilliseconds>=budget)return null;
-            // The settings pick one interface. DarkScape is a recolour of the
-            // modern templates, so it uses that set and nothing else.
+            // The settings pick one interface. Legacy keeps the old frames.
+            // DarkScape uses its brown close button and does not scan the
+            // modern blue corners.
             if(legacyInterface)return FindOldInterface(screenshot,pixels,scale,clock,budget);
+            if(darkscapeInterface)return FindDarkscape(screenshot,pixels,scale,clock,budget);
             return FindModern(screenshot,pixels,scale,clock,budget);
         }
         private DetectedPuzzle FindModern(Bitmap screenshot,Pixels pixels,float scale,System.Diagnostics.Stopwatch clock,int budget)
@@ -1105,6 +1131,31 @@ namespace KavrosClueHelper
             }
             return null;
         }
+        private DetectedPuzzle FindDarkscape(Bitmap screenshot, Pixels pixels, float scale, System.Diagnostics.Stopwatch clock, int budget)
+        {
+            if(clock!=null&&clock.ElapsedMilliseconds>=budget)return null;
+            Rectangle all=new Rectangle(Point.Empty, screenshot.Size);
+            ImagePattern close;
+            if(darkscapeClose.TryGetValue(scale, out close))
+            {
+                foreach(Point point in close.Find(pixels, all, 15))
+                {
+                    DetectedPuzzle slider=ReadSliderGrid(screenshot, point, scale, 298, 14);
+                    if(slider!=null)return slider;
+                }
+            }
+            // The puzzle window's gold close glyph is shared with the modern
+            // client. The blue corner templates are not searched here.
+            ImagePattern[] modern;
+            if(!patterns.TryGetValue(scale, out modern)||modern.Length<4)return null;
+            foreach(Point point in modern[3].Find(pixels, all, 15))
+            {
+                if(clock!=null&&clock.ElapsedMilliseconds>=budget)return null;
+                DetectedPuzzle slider=ReadSliderGrid(screenshot, point, scale, 298, 14);
+                if(slider!=null)return slider;
+            }
+            return null;
+        }
         // One close-button search at the scale this client should be using.
         // A side panel with bright text is not a clue, and this is what still
         // finds the slider on that frame. It does not walk the other scales.
@@ -1115,6 +1166,11 @@ namespace KavrosClueHelper
             Rectangle all = new Rectangle(Point.Empty, image.Size);
             if (!legacyInterface)
             {
+                if (darkscapeInterface)
+                {
+                    DetectedPuzzle brownSlider = FindDarkscape(image, pixels, scale, null, int.MaxValue);
+                    return brownSlider;
+                }
                 ImagePattern[] modern;
                 if (!patterns.TryGetValue(scale, out modern) || modern.Length < 4) return null;
                 foreach (Point close in modern[3].Find(pixels, all, 15))
@@ -1285,7 +1341,7 @@ namespace KavrosClueHelper
                     double[] fingerprint=pixels.Fingerprint(new Rectangle(i%5*38,i/5*38,30,30),6,6,false);
                     double[] brightness=Enumerable.Range(0,36).Select(n=>(fingerprint[n*3]+fingerprint[n*3+1]+fingerprint[n*3+2])/3).ToArray();
                     if(brightness.Max()-brightness.Min()<45) return null;
-                    var best=lockboxReferences.Select(r=>new {Value=r.Key,Score=Pixels.Similarity(fingerprint,r.Value,false)}).OrderByDescending(m=>m.Score).First();
+                    var best=ActiveLockboxReferences().Select(r=>new {Value=r.Key,Score=Pixels.Similarity(fingerprint,r.Value,false)}).OrderByDescending(m=>m.Score).First();
                     if(best.Score<threshold) return null;
                     board[i]=best.Value; minimum=Math.Min(minimum,best.Score);
                 }
@@ -1333,12 +1389,15 @@ namespace KavrosClueHelper
                 float scale=order[scaleIndex];
                 ImagePattern[] icons;
                 if(!lockboxPatterns.TryGetValue(scale,out icons))continue;
+                int themeCount=3;
+                int themeBase=darkscapeInterface?3:0;
+                if(icons.Length<themeBase+themeCount)continue;
                 int firstIcon=n==0?iconFrom:0;
-                if(firstIcon<0||firstIcon>=icons.Length)firstIcon=0;
-                for(int i=firstIcon;i<icons.Length;i++)
+                if(firstIcon<0||firstIcon>=themeCount)firstIcon=0;
+                for(int i=firstIcon;i<themeCount;i++)
                 {
                     if(!complete&&clock.ElapsedMilliseconds>=budgetMs){lockScaleCursor=scaleIndex;lockIconCursor=i;return null;}
-                    foreach(Point point in icons[i].Find(pixels,all,40))
+                    foreach(Point point in icons[themeBase+i].Find(pixels,all,40))
                     {
                         if(!LockboxSurface(pixels,point,scale))continue;
                         DetectedPuzzle best=null;
@@ -1358,6 +1417,10 @@ namespace KavrosClueHelper
             if(!complete){lockScaleCursor=0;lockIconCursor=0;}
             return null;
         }
+        private List<KeyValuePair<int, double[]>> ActiveLockboxReferences()
+        {
+            return darkscapeInterface ? darkscapeLockboxReferences : modernLockboxReferences;
+        }
         private bool LockboxSurface(Pixels p,Point origin,float scale)
         {
             int size=(int)Math.Round(182*scale);
@@ -1367,7 +1430,7 @@ namespace KavrosClueHelper
                 Rectangle tile=new Rectangle(origin.X+(int)Math.Round(cell%5*38*scale),origin.Y+(int)Math.Round(cell/5*38*scale),(int)Math.Round(30*scale),(int)Math.Round(30*scale));
                 double[] fp=p.Fingerprint(tile,6,6,false);double low=255,high=0;
                 for(int i=0;i<36;i++){double value=(fp[i*3]+fp[i*3+1]+fp[i*3+2])/3;low=Math.Min(low,value);high=Math.Max(high,value);}
-                if(high-low<30||!lockboxReferences.Any(r=>Pixels.Similarity(fp,r.Value,false)>=0.80))return false;
+                if(high-low<30||!ActiveLockboxReferences().Any(r=>Pixels.Similarity(fp,r.Value,false)>=0.80))return false;
             }
             return true;
         }

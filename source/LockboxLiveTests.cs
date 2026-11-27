@@ -17,6 +17,14 @@ namespace KavrosClueHelper
             2, 2, 2, 2, 2,
             2, 2, 2, 2, 2
         };
+        // The 1920x1027 DarkScape capture. Eleven wizard hats, eight bows, six swords.
+        static readonly int[] Darkscape1920 = {
+            1, 2, 0, 1, 0,
+            1, 1, 2, 2, 2,
+            2, 0, 2, 1, 2,
+            1, 2, 1, 1, 2,
+            2, 0, 0, 2, 0
+        };
         public static int Run(string report)
         {
             int count = 0;
@@ -73,6 +81,37 @@ namespace KavrosClueHelper
                     if (analyzed != null && analyzed.Board != null)
                         foreach (int cell in analyzed.Board) { if (cell == 2) hats++; else if (cell == 1) bows++; else if (cell == 0) swords++; }
                     check(hats == 16 && bows == 5 && swords == 4, "the capture is 16 wizard hats, 5 bows and 4 swords (" + hats + "/" + bows + "/" + swords + ")");
+                }
+                string dark = Path.Combine(assets, "test_assets", "lockbox", "darkscape-1920.png");
+                check(File.Exists(dark), "the DarkScape lockbox capture is in the test assets");
+                using (Bitmap image = new Bitmap(dark))
+                {
+                    check(image.Width == 1920 && image.Height == 1027, "the DarkScape capture is the 1920x1027 client");
+                    var modernOnly = new PuzzleDetector(assets);
+                    DetectedPuzzle modernHit = modernOnly.DetectBoards(image, new Pixels(image), true, true);
+                    check(modernHit == null || modernHit.Kind != PuzzleKind.Lockbox, "Modern does not spend the first look on the DarkScape lockbox");
+                    var detector = new PuzzleDetector(assets);
+                    detector.UseDarkscape(true);
+                    detector.ResetSearch();
+                    Pixels pixels = new Pixels(image);
+                    DetectedPuzzle found = null;
+                    int ticks = 0;
+                    string times = "";
+                    for (; ticks < 5 && (found == null || found.Kind != PuzzleKind.Lockbox); ticks++)
+                    {
+                        Stopwatch watch = Stopwatch.StartNew();
+                        found = detector.DetectBoards(image, pixels, true, true);
+                        long elapsed = watch.ElapsedMilliseconds;
+                        times += (times.Length == 0 ? "" : ",") + elapsed;
+                        check(elapsed < 700, "DarkScape lockbox tick " + ticks + " took " + elapsed + " ms");
+                    }
+                    check(ticks == 1 && found != null && found.Kind == PuzzleKind.Lockbox, "the first DarkScape look finds the lockbox (" + times + " ms)");
+                    check(found != null && found.Board != null && found.Board.SequenceEqual(Darkscape1920), "DarkScape live polling reads all 25 symbols " + Board(found));
+                    check(found != null && found.Confidence >= 0.95, "the DarkScape read is confident (" + (found == null ? "none" : found.Confidence.ToString("0.000")) + ")");
+                    int hats = 0, bows = 0, swords = 0;
+                    if (found != null && found.Board != null)
+                        foreach (int cell in found.Board) { if (cell == 2) hats++; else if (cell == 1) bows++; else if (cell == 0) swords++; }
+                    check(hats == 11 && bows == 8 && swords == 6, "the DarkScape capture is 11 wizard hats, 8 bows and 6 swords (" + hats + "/" + bows + "/" + swords + ")");
                 }
                 File.AppendAllText(report, "LOCKBOX LIVE PASS: " + count + " assertions.\r\n");
                 return 0;

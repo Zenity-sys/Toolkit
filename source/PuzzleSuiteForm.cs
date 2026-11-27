@@ -84,6 +84,7 @@ namespace KavrosClueHelper
         private readonly CheckBox checkUpdates=new KavrosCheckBox();
         private readonly CheckBox blurPreview=new KavrosCheckBox();
         private readonly InterfaceToggle modernInterface=new InterfaceToggle();
+        private readonly InterfaceToggle darkscapeInterface=new InterfaceToggle();
         private readonly InterfaceToggle legacyInterface=new InterfaceToggle();
         private readonly ComboBox resolutionChoice=new ComboBox();
         private readonly ComboBox scalingChoice=new ComboBox();
@@ -155,6 +156,7 @@ namespace KavrosClueHelper
             public int Dpi;
             public GuideInk Guide;
             public bool LegacyInterface;
+            public bool DarkscapeInterface;
             public int Resolution, Scaling, ResolutionManual, ScalingManual, ClientHeight;
         }
 
@@ -255,6 +257,8 @@ namespace KavrosClueHelper
             foreach (Control placed in Controls) if (placed.Bottom > contentBottom) contentBottom = placed.Bottom;
             ClientSize = new Size(ClientSize.Width, contentBottom + 16);
             AppUpdates.Present=ShowToast;
+            AppUpdates.OfferPending=delegate(string version){ if(floatingPanel!=null&&!floatingPanel.IsDisposed)floatingPanel.OfferUpdate(version); };
+            floatingPanel.UpdateRequested+=delegate{ AppUpdates.Check(this, true); };
             var trayMenu=new ContextMenuStrip();trayMenu.Items.Add("Open panel",null,delegate{OpenPanel();});trayMenu.Items.Add("Settings",null,delegate{ShowSettings();});trayMenu.Items.Add("Exit helper",null,delegate{ExitHelper();});
             AppBranding.ArrangeSettings(this);
             KavrosTheme.AddMainCards(this);
@@ -562,20 +566,28 @@ namespace KavrosClueHelper
             interfaceLabel.ForeColor = KavrosTheme.TextSoft;
             interfaceLabel.BackColor = KavrosTheme.Panel;
             modernInterface.Name = "ModernInterface";
-            modernInterface.Text = "Modern / DarkScape";
-            modernInterface.SetBounds(28, 1114, 214, 32);
+            modernInterface.Text = "Modern";
+            modernInterface.SetBounds(28, 1114, 140, 32);
             modernInterface.Font = KavrosTheme.Ui(9F, true);
+            darkscapeInterface.Name = "DarkscapeInterface";
+            darkscapeInterface.Text = "DarkScape";
+            darkscapeInterface.SetBounds(178, 1114, 140, 32);
+            darkscapeInterface.Font = KavrosTheme.Ui(9F, true);
             legacyInterface.Name = "LegacyInterface";
             legacyInterface.Text = "Legacy";
-            legacyInterface.SetBounds(254, 1114, 214, 32);
+            legacyInterface.SetBounds(328, 1114, 140, 32);
             legacyInterface.Font = KavrosTheme.Ui(9F, true);
             Controls.Add(modernInterface);
+            Controls.Add(darkscapeInterface);
             Controls.Add(legacyInterface);
-            modernInterface.CheckedChanged += delegate { if (modernInterface.Checked) ChooseInterface(false); };
-            legacyInterface.CheckedChanged += delegate { if (legacyInterface.Checked) ChooseInterface(true); };
+            modernInterface.CheckedChanged += delegate { if (modernInterface.Checked) ChooseInterface(0); };
+            darkscapeInterface.CheckedChanged += delegate { if (darkscapeInterface.Checked) ChooseInterface(1); };
+            legacyInterface.CheckedChanged += delegate { if (legacyInterface.Checked) ChooseInterface(2); };
             choosingInterface = true;
-            modernInterface.Checked = !preferences.LegacyInterface;
-            legacyInterface.Checked = preferences.LegacyInterface;
+            int initialSkin = preferences.LegacyInterface ? 2 : (preferences.DarkscapeInterface ? 1 : 0);
+            modernInterface.Checked = initialSkin == 0;
+            darkscapeInterface.Checked = initialSkin == 1;
+            legacyInterface.Checked = initialSkin == 2;
             choosingInterface = false;
             // Below the Client card, on the same flat background as the other
             // settings rows. The dropdown styling is unchanged.
@@ -605,15 +617,19 @@ namespace KavrosClueHelper
             scalingChoice.SelectedIndexChanged += delegate { if (!refreshingClient) SaveScaling(); };
             RefreshClientLabels();
         }
-        private void ChooseInterface(bool legacy)
+        private void ChooseInterface(int skin)
         {
             if (choosingInterface) return;
             choosingInterface = true;
-            modernInterface.Checked = !legacy;
-            legacyInterface.Checked = legacy;
+            modernInterface.Checked = skin == 0;
+            darkscapeInterface.Checked = skin == 1;
+            legacyInterface.Checked = skin == 2;
             choosingInterface = false;
-            if (preferences.LegacyInterface == legacy) return;
+            bool legacy = skin == 2;
+            bool darkscape = skin == 1;
+            if (preferences.LegacyInterface == legacy && preferences.DarkscapeInterface == darkscape) return;
             preferences.LegacyInterface = legacy;
+            preferences.DarkscapeInterface = darkscape;
             preferences.Save();
             if (positionReader != null) positionReader.UseInterface(legacy);
         }
@@ -889,7 +905,7 @@ namespace KavrosClueHelper
                 try{uint raw=Native.GetDpiForWindow(window);if(raw>=96)dpi=(int)raw;}
                 catch(DllNotFoundException){}
                 catch(EntryPointNotFoundException){}
-                QueueAnalysis(new AnalysisJob { Image=screenshot,Generation=sourceGeneration,Window=window,CaptureOffset=captureArea.Location,Cropped=cropped,ClientSize=bounds.Size,CapturedAt=DateTime.UtcNow,Stable=stable,Offline=false,Reverse=reverse.Checked,WholeRows=true,Dpi=dpi,Guide=guide,LegacyInterface=preferences.LegacyInterface,Resolution=preferences.Resolution,Scaling=preferences.Scaling,ResolutionManual=preferences.ResolutionManual,ScalingManual=preferences.ScalingManual,ClientHeight=bounds.Height });
+                QueueAnalysis(new AnalysisJob { Image=screenshot,Generation=sourceGeneration,Window=window,CaptureOffset=captureArea.Location,Cropped=cropped,ClientSize=bounds.Size,CapturedAt=DateTime.UtcNow,Stable=stable,Offline=false,Reverse=reverse.Checked,WholeRows=true,Dpi=dpi,Guide=guide,LegacyInterface=preferences.LegacyInterface,DarkscapeInterface=preferences.DarkscapeInterface,Resolution=preferences.Resolution,Scaling=preferences.Scaling,ResolutionManual=preferences.ResolutionManual,ScalingManual=preferences.ScalingManual,ClientHeight=bounds.Height });
                 ShowGuidance();
             }
             catch (Exception ex) { ClearUnreadableFrame(); status.Text = ex.Message; }
@@ -933,7 +949,7 @@ namespace KavrosClueHelper
                 PuzzleAnalysisEngine engine=EnsureEngine();
                 engine.Progress=message=>analysisStage=message;
                 analysisStage=null;
-                engine.UseClient(job.LegacyInterface, job.Resolution, job.Scaling, job.ResolutionManual, job.ScalingManual, job.ClientHeight);
+                engine.UseClient(job.LegacyInterface, job.Resolution, job.Scaling, job.ResolutionManual, job.ScalingManual, job.ClientHeight, job.DarkscapeInterface);
                 AnalysisResult result=engine.Analyze(job.Image,job.Generation,job.Reverse,analysisCancellation.Token,!job.Offline,job.WholeRows, job.Offline ? (Point?)null : job.CaptureOffset, job.Dpi, job.Guide);
                 if(result.Plan==null || (result.Plan.Puzzle.Kind==PuzzleKind.Towers && result.Plan.Towers==null))
                 { result.DiagnosticImage=job.Image; retained=true; }
@@ -1515,7 +1531,7 @@ namespace KavrosClueHelper
             CancelAnalysis(); requestedScan=false; automatic.Checked=false; offline=true; current=null; pendingKey=null; marks.Clear(); overlay.Hide();
             ShowMasterView(false); masterView.SetClue(null,assetPath);
             detected.Text="Reading image..."; status.Text="The image is being processed in the background.";
-            QueueAnalysis(new AnalysisJob { Image=image,Generation=sourceGeneration,Offline=true,Stable=false,Reverse=reverse.Checked,WholeRows=true,LegacyInterface=preferences.LegacyInterface,Resolution=preferences.Resolution,Scaling=preferences.Scaling,ResolutionManual=preferences.ResolutionManual,ScalingManual=preferences.ScalingManual });
+            QueueAnalysis(new AnalysisJob { Image=image,Generation=sourceGeneration,Offline=true,Stable=false,Reverse=reverse.Checked,WholeRows=true,LegacyInterface=preferences.LegacyInterface,DarkscapeInterface=preferences.DarkscapeInterface,Resolution=preferences.Resolution,Scaling=preferences.Scaling,ResolutionManual=preferences.ResolutionManual,ScalingManual=preferences.ScalingManual });
         }
     }
 

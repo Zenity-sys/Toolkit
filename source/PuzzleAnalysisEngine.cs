@@ -153,9 +153,14 @@ namespace KavrosClueHelper
         private AnalysisResult PendingSlider(long elapsed)
         {return new AnalysisResult{Plan=cached,Pending=true,Unchanged=true,Milliseconds=elapsed};}
         public void UseLegacy(bool legacy) { detector.UseLegacy(legacy); }
+        public void UseDarkscape(bool enabled) { detector.UseDarkscape(enabled); }
         public void UseClient(bool legacy, int resolution, int scaling, int resolutionManual, int scalingManual, int clientHeight)
         {
             detector.UseClient(legacy, resolution, scaling, resolutionManual, scalingManual, clientHeight);
+        }
+        public void UseClient(bool legacy, int resolution, int scaling, int resolutionManual, int scalingManual, int clientHeight, bool darkscape)
+        {
+            detector.UseClient(legacy, resolution, scaling, resolutionManual, scalingManual, clientHeight, darkscape);
         }
         public AnalysisResult Analyze(Bitmap image, int source, bool reverse, CancellationToken cancellation, bool livePolling = false,bool wholeRows=false, Point? captureOrigin=null, int dpi=96, GuideInk guide=null)
         {

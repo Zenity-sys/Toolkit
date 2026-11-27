@@ -28,7 +28,10 @@ namespace KavrosClueHelper
         }
         internal static string Text()
         {
-            return "v0.9.13\r\n"
+            return "v0.9.14\r\n"
+                + "DarkScape lockboxes and treasure maps are read when DarkScape is selected in Settings. Settings has separate Modern, DarkScape, and Legacy buttons. When an update is ready, the clue panel shows it without taking focus from Kavros. Auto capture stays on the game client, so Notepad and other programs are not picked up just because the title mentions Kavros.\r\n"
+                + "\r\n"
+                + "v0.9.13\r\n"
                 + "Finding a puzzle or a scan no longer takes focus away from Kavros. The first lockbox on a large window shows up sooner. Scan clues note that live tracking can be finicky, and you can click spots on the map to cross them off. The Prifddinas scan lists ;;prif as the fastest way there.\r\n"
                 + "\r\n"
                 + "v0.9.12\r\n"

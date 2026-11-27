@@ -152,6 +152,57 @@ namespace KavrosClueHelper
             }
             return found;
         }
+        // A DarkScape clue is a beige sheet in a brown frame, with the gold
+        // close button on the top-right corner. The roof is as dark as the
+        // frame, so this does not ask for an isolated modern title bar.
+        public static List<Rectangle> FindDarkscapeScrolls(Pixels p)
+        {
+            var found=new List<Rectangle>();
+            if(p==null)return found;
+            foreach(Rectangle paper in FindPapers(p))
+            {
+                if(paper.Width<340||paper.Width>1400||paper.Height<180||paper.Height>900)continue;
+                if(!DarkscapeFrame(p,paper))continue;
+                found.Add(paper);
+                if(found.Count==2)break;
+            }
+            return found;
+        }
+        static bool DarkscapeFrame(Pixels p,Rectangle r)
+        {
+            int topDark=0,topN=0,y=Math.Max(0,r.Top-6);
+            for(int x=r.Left+12;x<r.Right-12;x+=8)
+            {
+                topN++;
+                if(y<p.Height&&Dark(p.Get(x,y),70))topDark++;
+            }
+            if(topN==0||topDark*1.0/topN<0.40)return false;
+            int sides=0,sideN=0;
+            for(int yy=r.Top+24;yy<r.Bottom-16;yy+=28)
+            {
+                sideN++;
+                if(DarkscapeSide(p,r.Left,yy,true)&&DarkscapeSide(p,r.Right,yy,false))sides++;
+            }
+            if(sideN==0||sides*1.0/sideN<0.5)return false;
+            int gold=0;
+            int gx0=Math.Max(0,r.Right-36),gx1=Math.Min(p.Width-1,r.Right+28);
+            int gy0=Math.Max(0,r.Top-48),gy1=Math.Min(p.Height-1,r.Top+8);
+            for(int yy=gy0;yy<=gy1;yy+=2)for(int x=gx0;x<=gx1;x+=2)
+            {
+                Color c=p.Get(x,yy);
+                if(c.R>170&&c.G>70&&c.B<140&&c.R>c.B+50)gold++;
+            }
+            return gold>=3;
+        }
+        static bool DarkscapeSide(Pixels p,int edge,int y,bool left)
+        {
+            if(y<0||y>=p.Height)return false;
+            int x0=left?Math.Max(0,edge-16):Math.Max(0,edge-4);
+            int x1=left?Math.Min(p.Width-1,edge+4):Math.Min(p.Width-1,edge+16);
+            int dark=0;
+            for(int x=x0;x<=x1;x+=2)if(Dark(p.Get(x,y),80))dark++;
+            return dark>=2;
+        }
         static double PaperBand(Pixels p,int x0,int x1,int y)
         {
             if(y<0||y>=p.Height||x1<=x0)return 0;
