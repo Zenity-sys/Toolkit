@@ -1,5 +1,15 @@
 # Kavros Clue Helper
 
+## 0.9.11
+
+**Puzzles**
+- DarkScape sliding puzzles are found while the side panel is open, in live play and on a still capture. The route is solved from the tiles, and the frame stays tracked while you solve it.
+- A DarkScape Celtic Knot whose parchment is only fully visible along the top edge is found on the first look. Brighter gold tracks and the red ring are read with the existing knot.
+
+**Launch**
+- `--show-panel` opens the clue panel at startup, and a second launch with that switch opens the panel of the copy that is already running.
+- `--no-tray` starts the helper without a tray icon. The already-running notice no longer mentions the tray when there is no icon.
+
 ## 0.9.10
 
 **Puzzles**

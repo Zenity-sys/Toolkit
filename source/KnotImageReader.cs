@@ -45,7 +45,7 @@ namespace KavrosClueHelper
             Colours(new[] { 46,46,77,45,45,75,28,28,47,35,25,58,50,50,85 }),
             Colours(new[] { 137,60,43,67,29,21,97,43,30,62,27,17 }),
             Colours(new[] { 12,12,18,11,11,16,18,18,27 }),
-            Colours(new[] { 43,30,0,159,112,0,205,146,0,104,74,0,137,97,0 }),
+            Colours(new[] { 43,30,0,159,112,0,205,146,0,104,74,0,137,97,0,247,180,19 }),
             Colours(new[] { 95,89,76,123,116,98,30,28,24 })
         };
         private static Color[] Colours(int[] values) { return Enumerable.Range(0, values.Length / 3).Select(i => Color.FromArgb(values[3 * i], values[3 * i + 1], values[3 * i + 2])).ToArray(); }
@@ -152,6 +152,9 @@ namespace KavrosClueHelper
                     if (cell == null || !cell.Intersection) continue;
                     cell.Matches = !RedRing(pixels, new Point(origin.X + x * 24, origin.Y + y * 24));
                 }
+                // A red ring replaces the old green pip. The pip samples then
+                // land in the empty middle and the margin is not a real doubt.
+                if (rs3) worstMargin = Math.Max(worstMargin, 1);
                 List<Lane> lanes = new List<Lane>();
                 while (true)
                 {

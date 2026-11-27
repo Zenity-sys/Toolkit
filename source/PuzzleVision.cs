@@ -1098,10 +1098,42 @@ namespace KavrosClueHelper
             }
             foreach (Point close in p[3].Find(pixels, all, 15))
             {
-                Rectangle grid = new Rectangle(close.X - (int)Math.Round(298 * scale), close.Y + (int)Math.Round(14 * scale), (int)Math.Round(273 * scale), (int)Math.Round(273 * scale));
-                DetectedPuzzle slider = sliders.Read(screenshot, grid, scale); if (slider != null) return slider;
+                DetectedPuzzle slider = ReadSliderGrid(screenshot, close, scale, 298, 14); if (slider != null) return slider;
             }
             return null;
+        }
+        // One close-button search at the scale this client should be using.
+        // A side panel with bright text is not a clue, and this is what still
+        // finds the slider on that frame. It does not walk the other scales.
+        internal DetectedPuzzle FindOpenSlider(Bitmap image, Pixels pixels)
+        {
+            if (image == null || pixels == null) return null;
+            float scale = ExpectedScale(ProfileHeight(image.Height));
+            Rectangle all = new Rectangle(Point.Empty, image.Size);
+            if (!legacyInterface)
+            {
+                ImagePattern[] modern;
+                if (!patterns.TryGetValue(scale, out modern) || modern.Length < 4) return null;
+                foreach (Point close in modern[3].Find(pixels, all, 15))
+                {
+                    DetectedPuzzle slider = ReadSliderGrid(image, close, scale, 298, 14);
+                    if (slider != null) return slider;
+                }
+                return null;
+            }
+            ImagePattern[] anchors;
+            if (!oldSliderAnchors.TryGetValue(scale, out anchors)) return null;
+            foreach (ImagePattern anchor in anchors) foreach (Point close in anchor.Find(pixels, all, 15))
+            {
+                DetectedPuzzle slider = ReadSliderGrid(image, close, scale, 297, 15);
+                if (slider != null) return slider;
+            }
+            return null;
+        }
+        private DetectedPuzzle ReadSliderGrid(Bitmap image, Point close, float scale, int left, int down)
+        {
+            Rectangle grid = new Rectangle(close.X - (int)Math.Round(left * scale), close.Y + (int)Math.Round(down * scale), (int)Math.Round(273 * scale), (int)Math.Round(273 * scale));
+            return sliders.Read(image, grid, scale);
         }
         private DetectedPuzzle FindOldInterface(Bitmap image, Pixels pixels, float scale, System.Diagnostics.Stopwatch clock, int budget)
         {
@@ -1371,6 +1403,34 @@ namespace KavrosClueHelper
                 return new DetectedPuzzle{Kind=PuzzleKind.Towers,Bounds=area,Grid=previous.Grid,Scale=previous.Scale,Towers=previous.Towers,TowerSolutions=previous.TowerSolutions,Confidence=previous.Confidence};
             }
         }
+        private static bool KnotFrameRow(Pixels pixels, int left, int right, int y)
+        {
+            return pixels.KnotDark(left - 3, y) && pixels.KnotDark(right + 3, y) && pixels.KnotPaper(left, y) && pixels.KnotPaper(right, y);
+        }
+        // The paper run on one row, starting from a pixel that was paper nearby.
+        private static bool KnotLip(Pixels pixels, int y, int hint, out int left, out int right)
+        {
+            left = right = hint;
+            if (y < 0 || y >= pixels.Height) return false;
+            int x = hint;
+            if (!pixels.KnotPaper(x, y))
+            {
+                int found = -1;
+                for (int d = 1; d <= 24 && found < 0; d++)
+                {
+                    if (pixels.KnotPaper(hint - d, y)) found = hint - d;
+                    else if (pixels.KnotPaper(hint + d, y)) found = hint + d;
+                }
+                if (found < 0) return false;
+                x = found;
+            }
+            while (x > 1 && pixels.KnotPaper(x - 1, y)) x--;
+            left = x;
+            while (x < pixels.Width - 2 && pixels.KnotPaper(x + 1, y)) x++;
+            right = x;
+            int length = right - left + 1;
+            return length >= 240 && length <= 1600;
+        }
         private static bool KnotSpan(Pixels pixels, int left, int right, int y)
         {
             if (y < 0 || y >= pixels.Height || right <= left) return false;
@@ -1453,10 +1513,30 @@ namespace KavrosClueHelper
                         while (runStart > 1 && pixels.KnotPaper(runStart - 1, y)) runStart--;
                         while (runLast < pixels.Width - 2 && pixels.KnotPaper(runLast + 1, y)) runLast++;
                         int length = runLast - runStart + 1;
-                        if (length >= 240 && length <= 1600 && KnotEdgeDark(pixels, runStart, -1, y) && KnotEdgeDark(pixels, runLast, 1, y))
+                        if (length >= 240 && length <= 1600)
                         {
+                            int spanLeft = runStart, spanRight = runLast, spanY = y;
+                            bool framed = KnotEdgeDark(pixels, spanLeft, -1, spanY) && KnotEdgeDark(pixels, spanRight, 1, spanY);
+                            // The full-width parchment can be only a few pixels
+                            // tall, between these rows, once the info button and
+                            // the arrows cut the line. A run that meets one frame
+                            // is enough reason to look at the rows in between.
+                            if (!framed && (KnotEdgeDark(pixels, runStart, -1, y) || KnotEdgeDark(pixels, runLast, 1, y)))
+                            {
+                                for (int dy = -8; dy <= 8 && !framed; dy++)
+                                {
+                                    if (dy == 0) continue;
+                                    int yy = y + dy;
+                                    int lipLeft, lipRight;
+                                    if (yy < 24 || yy >= pixels.Height - 60) continue;
+                                    if (!KnotLip(pixels, yy, runStart, out lipLeft, out lipRight)) continue;
+                                    if (!KnotEdgeDark(pixels, lipLeft, -1, yy) || !KnotEdgeDark(pixels, lipRight, 1, yy)) continue;
+                                    spanLeft = lipLeft; spanRight = lipRight; spanY = yy; framed = true;
+                                }
+                            }
+                            if (!framed) { runStart = -1; continue; }
                             bool tried;
-                            DetectedPuzzle found = ReadKnotSpan(image, pixels, runStart, runLast, y, seen, out tried);
+                            DetectedPuzzle found = ReadKnotSpan(image, pixels, spanLeft, spanRight, spanY, seen, out tried);
                             if (found != null) { knotScanY = 24; return found; }
                             if (tried) reads++;
                             if (reads >= 2 || clock.ElapsedMilliseconds >= budgetMs) { knotScanY = y; return null; }
@@ -1489,6 +1569,14 @@ namespace KavrosClueHelper
             while (top > 1 && KnotSpan(pixels, runStart, runLast, top - 1)) top--;
             while (bottom < pixels.Height - 2 && KnotSpan(pixels, runStart, runLast, bottom + 1)) bottom++;
             int width = runLast - runStart + 1, height = bottom - top + 1;
+            // A wide diamond drops the paper percentage before the frame ends.
+            // Follow the dark sides for the rest of the window.
+            if (height > 0 && width / (float)height > 1.9F)
+            {
+                while (top > 1 && KnotFrameRow(pixels, runStart, runLast, top - 1)) top--;
+                while (bottom < pixels.Height - 2 && KnotFrameRow(pixels, runStart, runLast, bottom + 1)) bottom++;
+                height = bottom - top + 1;
+            }
             if (width < 240 || height < 150) return null;
             float aspect = width / (float)height;
             if (aspect < 1.35F || aspect > 1.9F) return null;
