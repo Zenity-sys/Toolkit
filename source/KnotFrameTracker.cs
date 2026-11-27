@@ -18,15 +18,14 @@ namespace KavrosClueHelper
         {
             string key=RuneKey(puzzle.Knot);
             bool same=rawKey==key&&(now-seen).TotalMilliseconds<1500;
-            bool turned=rawKey!=null&&rawKey!=key&&(now-seen).TotalMilliseconds<1500;
             frames=same?frames+1:1;
             rawKey=key;seen=now;
             puzzle.Knot=KnotImageReader.Merge(puzzle.Knot,History);
             bool reliable=puzzle.Knot!=null&&puzzle.Knot.Reliable;
-            // A still, confident reading is shown immediately. A ring that just
-            // moved waits until the same runes come back, so a half-turned
-            // frame cannot publish a count. Merge keeps skipped clicks.
-            bool moving=live&&frames<2&&!(reliable&&!turned);
+            // A clean reading is published on this frame, including the frame a
+            // ring has just finished turning. Only a blurred mid-spin frame,
+            // which is not reliable, waits for the same runes to come back.
+            bool moving=live&&!reliable&&frames<2;
             if(!moving||History==null)History=puzzle.Knot;
             return moving;
         }

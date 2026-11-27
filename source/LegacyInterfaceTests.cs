@@ -16,6 +16,7 @@ namespace KavrosClueHelper
                 string assets = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets");
                 string shots = Path.Combine(assets, "test_assets", "legacy");
                 var detector = new PuzzleDetector(assets);
+                detector.UseLegacy(true);
                 using (Bitmap towers = new Bitmap(Path.Combine(shots, "towers-legacy.png")))
                 {
                     DetectedPuzzle found = detector.Detect(towers, true, false);
@@ -56,6 +57,7 @@ namespace KavrosClueHelper
                 using (Bitmap orb = new Bitmap(Path.Combine(shots, "minimap-orb.png")))
                 {
                     var anchor = new MinimapAnchor(assets);
+                    anchor.InterfaceLegacy = true;
                     var marks = anchor.Marks(orb);
                     MinimapAnchor.Mark legacy = marks.FirstOrDefault(m => m.Legacy);
                     check(marks.Any(m => m.Legacy) && legacy.Score >= 0.85, "legacy H button is the minimap anchor " + String.Join(";", marks.Select(m => (m.Legacy ? "H" : "home") + " " + m.Score.ToString("0.00")).ToArray()));

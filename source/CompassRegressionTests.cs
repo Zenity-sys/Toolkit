@@ -144,14 +144,14 @@ namespace KavrosClueHelper
                 {
                     panel.Location=new Point(0,0);panel.Show();panel.SetCompass(true);System.Windows.Forms.Application.DoEvents();Snapshot(panel,Path.Combine(dir,"compass-panel-preview.png"));
                     Check(panel.Controls.OfType<CompassMap>().Single().Visible&&!panel.Controls.OfType<MasterClueView>().Single().Visible,"compass map is visible while the master card is hidden");
-                    Check(panel.Width==400&&panel.Height==556,"compass controls fit the floating panel");
+                    Check(panel.Width==400&&panel.Height==556+WhatsNewLayout.PanelExtra,"compass controls fit the floating panel");
                     for(int i=0;i<3;i++)session.Observe(new CompassReading{Solved=true},DateTime.UtcNow.AddMilliseconds(-400+i*200));
                     panel.RefreshCompass(false);
                     Check(panel.Controls.OfType<System.Windows.Forms.Label>().Any(c=>c.Text.Contains("Dig at your current position")),"an X result takes priority over an older map target");
                     panel.SetPuzzle(new DetectedPuzzle{Kind=PuzzleKind.EmoteClue,Master=MasterClues.ById(236)},"");System.Windows.Forms.Application.DoEvents();Snapshot(panel,Path.Combine(dir,"master-panel-preview.png"));
                     Check(panel.Controls.OfType<MasterClueView>().Single().Visible&&!panel.Controls.OfType<CompassMap>().Single().Visible,"master card replaces the compass controls");
-                    Check(panel.Height==480,"master guidance switches into its compact map card");
-                    panel.SetPuzzle(new DetectedPuzzle{Kind=PuzzleKind.Towers},"Corners show clicks left. Green 0 means complete.");Check(panel.Height==140,"puzzle guidance uses a small panel");
+                    Check(panel.Height==480+WhatsNewLayout.PanelExtra,"master guidance switches into its compact map card");
+                    panel.SetPuzzle(new DetectedPuzzle{Kind=PuzzleKind.Towers},"Corners show clicks left. Green 0 means complete.");Check(panel.Height==140+WhatsNewLayout.PanelExtra,"puzzle guidance uses a small panel");
                 }
                 File.AppendAllText(report,"V0.4.0 FLOATING PANEL RENDER PASS: map and master cards painted, mode sizing verified on an isolated virtual display. No user desktop or game input was used.\r\n");return 0;
             }catch(Exception e){File.AppendAllText(report,e+"\r\n");return 1;}

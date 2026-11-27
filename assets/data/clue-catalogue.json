@@ -2475,33 +2475,6 @@
       "status": "Reference data; Kavros verification required"
     },
     {
-      "id": 188,
-      "type": "cryptic",
-      "tier": "medium",
-      "text": [
-        "Try not to step on any aquatic nasties while searching this crate."
-      ],
-      "solution": {
-        "type": "search",
-        "entity": "Crate",
-        "spot": {
-          "level": 0,
-          "topleft": {
-            "x": 2764,
-            "y": 3273
-          },
-          "botright": {
-            "x": 2764,
-            "y": 3273
-          }
-        }
-      },
-      "catalogue_id": "CT:188",
-      "source_url": "https://github.com/Leridon/cluetrainer/blob/9fce561ca9ef98c58b67ff98b50b578e153a878f/src/data/clues.ts",
-      "guide_url": "https://runescape.wiki/w/Treasure_Trails/Guide/Cryptics",
-      "status": "Reference data; Kavros verification required"
-    },
-    {
       "id": 189,
       "type": "cryptic",
       "tier": "medium",
@@ -8483,21 +8456,6 @@
           {
             "range": {
               "origin": {
-                "x": 2499,
-                "y": 3861,
-                "level": 1
-              },
-              "size": {
-                "x": 4,
-                "y": 4
-              }
-            },
-            "note": "After 'Blood Runs Deep'",
-            "description": "in Miscellania's Throneroom"
-          },
-          {
-            "range": {
-              "origin": {
                 "x": 2612,
                 "y": 3871,
                 "level": 1
@@ -8509,6 +8467,21 @@
             },
             "note": "Before 'Blood Runs Deep'",
             "description": "in Etceteria Castle"
+          },
+          {
+            "range": {
+              "origin": {
+                "x": 2499,
+                "y": 3861,
+                "level": 1
+              },
+              "size": {
+                "x": 4,
+                "y": 4
+              }
+            },
+            "note": "After 'Blood Runs Deep'",
+            "description": "in Miscellania's Throneroom"
           }
         ],
         "npc": "Queen Sigrid"

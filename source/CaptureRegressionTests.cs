@@ -103,6 +103,7 @@ namespace KavrosClueHelper
                 Check(GameVisibility.Any(area,p=>!panel.Contains(p)),"a partially visible client can still be searched");
                 Check(!GameVisibility.Clear(area,p=>!panel.Contains(p)),"a covered puzzle centre cannot supply guidance from another window");
                 Check(!GameVisibility.Any(area,p=>false),"a completely covered game is not captured");
+                engine.UseLegacy(true);
                 using(Bitmap source=TestFixtures.LockboxImage("classic"))
                 using(Bitmap game=Game(source,new Point(1193,677)))
                 using(AnalysisResult legacy=engine.Analyze(game,3103,false,CancellationToken.None)) Check(legacy.Plan!=null && legacy.Plan.Puzzle.Kind==PuzzleKind.Lockbox,"indexed anchor search also finds the classic frame");

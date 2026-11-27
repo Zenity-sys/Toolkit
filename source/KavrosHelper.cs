@@ -29,7 +29,12 @@ namespace KavrosClueHelper
                 if(args.Length>1&&args[0]=="--follow-test")return FollowRegressionTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--window-test")return WindowRegressionTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--legacy-test")return LegacyInterfaceTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--darkscape-test")return DarkscapeTowersTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--tower-poll-test")return TowerPollingTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--knot-test")return KnotSpeedTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--knot-capture-test")return KnotCaptureTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--whats-new-test")return ReleaseBannerTests.Run(args[1]);
+                if(args.Length>1&&args[0]=="--lockbox-live-test")return LockboxLiveTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--steady-test")return SteadyTrackingTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--reliability-test")return ReliabilityRegressionTests.Run(args[1]);
                 if(args.Length>1&&args[0]=="--paint-test")return PaintingRegressionTests.Run(args[1]);
@@ -71,6 +76,14 @@ namespace KavrosClueHelper
                     if(maps!=0) return maps;
                     int analysis=AnalysisRegressionTests.Run(report);
                     if(analysis!=0) return analysis;
+                    int towerPoll=TowerPollingTests.Run(report);
+                    if(towerPoll!=0) return towerPoll;
+                    int lockboxLive=LockboxLiveTests.Run(report);
+                    if(lockboxLive!=0) return lockboxLive;
+                    int whatsNew=ReleaseBannerTests.Run(report);
+                    if(whatsNew!=0) return whatsNew;
+                    int knotCapture=KnotCaptureTests.Run(report);
+                    if(knotCapture!=0) return knotCapture;
                     int overlay=OverlayRegressionTests.Run(report);
                     if(overlay!=0) return overlay;
                     int countdown=CountdownRegressionTests.Run(report);
@@ -82,7 +95,9 @@ namespace KavrosClueHelper
                     int robust=RobustnessRegressionTests.Run(report);
                     if(robust!=0)return robust;
                     int discovery=DiscoveryRegressionTests.Run(report);
-                    return discovery==0?CompassRegressionTests.Run(report):discovery;
+                    if(discovery!=0)return discovery;
+                    int darkscape=DarkscapeTowersTests.Run(report);
+                    return darkscape==0?CompassRegressionTests.Run(report):darkscape;
                 }
                 if (args.Length > 1 && args[0] == "--render-ui")
                 {
@@ -108,14 +123,16 @@ namespace KavrosClueHelper
                 ClientBinding binding = ClientLaunch.Capture(args, launchForeground);
                 bool firstInstance;
                 singleInstance = new System.Threading.Mutex(true, InstanceName(binding), out firstInstance);
+                NoticeToast.TrayHidden = PuzzleSuiteForm.NoTrayOnLaunch = ClientLaunch.NoTrayRequested(args);
                 if (!firstInstance)
                 {
                     IntPtr running = FindRunningHelper(binding);
-                    bool posted = running != IntPtr.Zero && Native.PostMessage(running, Native.NoticeMessage, IntPtr.Zero, IntPtr.Zero);
+                    bool posted = running != IntPtr.Zero && Native.PostMessage(running, ClientLaunch.ShowPanelRequested(args) ? Native.ShowPanelMessage : Native.NoticeMessage, IntPtr.Zero, IntPtr.Zero);
                     if (!posted) NoticeToast.ShowAndWait("Already running. Check the tray.", Native.VirtualScreen());
                     return 0;
                 }
                 PuzzleSuiteForm.LaunchBinding = binding;
+                PuzzleSuiteForm.ShowPanelOnLaunch = ClientLaunch.ShowPanelRequested(args);
                 PuzzleSuiteForm helper = new PuzzleSuiteForm();
                 helper.Shown += delegate
                 {
@@ -600,6 +617,7 @@ namespace KavrosClueHelper
             if (message.Msg == 0x0084) { message.Result = new IntPtr(-1); return; }
             base.WndProc(ref message);
         }
+        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); }
         public void Display(Rectangle bounds, int[] values)
         {
             Bounds = bounds;

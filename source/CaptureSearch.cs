@@ -86,8 +86,9 @@ namespace KavrosClueHelper
             if(p.Kind==PuzzleKind.EmoteClue) return p.Confidence<0.92;
             if(p.Kind==PuzzleKind.Compass) return false; // Stable-angle confirmation happens before recording a bearing.
             if(p.Kind==PuzzleKind.Scan)return false;
-            // A solved, still knot already waited out any turn inside the reader.
-            if(p.Kind==PuzzleKind.Knot) return plan.KnotMoving || plan.Knot==null;
+            // A clean knot reading is shown immediately, even when one more
+            // turn is needed before the clicks are known. A blurred frame waits.
+            if(p.Kind==PuzzleKind.Knot) return plan.KnotMoving;
             return true;
         }
     }

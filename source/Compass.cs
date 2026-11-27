@@ -33,6 +33,24 @@ namespace KavrosClueHelper
         private readonly double[][] off,msaa;
         private readonly double amplitude,phase,offset;
         private readonly float[] scales={0.8F,1F,8F/9F,1.25F,4F/3F,1.5F,2F};
+        private int dpi=96;
+        private float targetScale;
+        public void UseDpi(int value){dpi=value<96?96:value;}
+        public void UseTarget(float value){targetScale=value;}
+        private IEnumerable<float> ScaleOrder()
+        {
+            float aim=targetScale>0.01F?targetScale:(dpi==96?0F:dpi/96F);
+            if(aim<=0F)return scales;
+            // The Auto guess stays first. Scale 1.0 is next, so a 100% client
+            // is not stuck behind 1.25 and 1.5 on the full window.
+            return scales.OrderBy(s=>ScaleRank(s,aim)).ThenBy(s=>Math.Abs(s-aim)).ThenBy(s=>s);
+        }
+        private static int ScaleRank(float scale,float aim)
+        {
+            if(Math.Abs(scale-aim)<0.02F)return 0;
+            if(Math.Abs(scale-1F)<0.02F)return 1;
+            return 2;
+        }
         public CompassVision(string assets)
         {
             string dir=Path.Combine(assets,"compass");
@@ -89,9 +107,13 @@ namespace KavrosClueHelper
         }
         public DetectedPuzzle Find(Bitmap image,Pixels pixels)
         {
-            Rectangle all=new Rectangle(Point.Empty,image.Size);
-            List<Rectangle> areas=ScrollAreas.Find(pixels);
-            foreach(float scale in scales) foreach(Rectangle area in (scale==0.8F||scale==1F?new List<Rectangle>{all}:areas)) foreach(Point anchor in anchors[scale].Find(pixels,area,12,47,q=>NorthBackground(pixels,q,scale)))
+            return Find(image,pixels,null);
+        }
+        public DetectedPuzzle Find(Bitmap image,Pixels pixels,Rectangle? clip)
+        {
+            Rectangle all=clip??new Rectangle(Point.Empty,image.Size);
+            List<Rectangle> areas=clip.HasValue?new List<Rectangle>{all}:ScrollAreas.Find(pixels);
+            foreach(float scale in (clip.HasValue?scales.OrderBy(s=>ScaleRank(s,1F)).ThenBy(s=>Math.Abs(s-1F)).ThenBy(s=>s):ScaleOrder())) foreach(Rectangle area in (clip.HasValue||scale==0.8F||scale==1F?new List<Rectangle>{all}:areas)) foreach(Point anchor in anchors[scale].Find(pixels,area,12,47,q=>NorthBackground(pixels,q,scale)))
             {
                 Rectangle body=new Rectangle(anchor.X-(int)Math.Round(78*scale),anchor.Y-(int)Math.Round(20*scale),(int)Math.Round(176*scale),(int)Math.Round(259*scale));
                 DetectedPuzzle best=null;

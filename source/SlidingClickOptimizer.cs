@@ -158,8 +158,20 @@ namespace KavrosClueHelper
             return Solves(initial,proven)?proven:SlidingSolver.Solve(initial);
         }
 
+        public static int SlowSolves;
+        // The first step the player sees. The greedy route is immediate.
+        // A shorter proof, when one exists, is refined on a background thread.
+        public static SlidingOptimization Quick(int[] initial)
+        {
+            SlidingOptimization route=Fresh(initial);
+            if(route.Moves==null||route.Moves.Count==0)return route;
+            int clicks=ClickCount(initial,route.Moves);
+            route.Optimal=clicks==route.LowerBound&&Solves(initial,route.Moves);
+            return route;
+        }
         public static SlidingOptimization Solve(int[] initial,int milliseconds=2500)
         {
+            SlowSolves++;
             if(!SlidingSolver.IsValid(initial)||!SlidingSolver.IsSolvable(initial))return new SlidingOptimization{Moves=new List<int>(),LowerBound=0,Optimal=false};
             var clock=Stopwatch.StartNew();SlidingOptimization seed=SlidingOptimizer.Solve(initial,Math.Min(1000,milliseconds/2));List<int> best=seed.Moves;int clicks=ClickCount(initial,best),lower=LowerBound(initial);
             if(clicks==lower&&Solves(initial,best))return new SlidingOptimization{Moves=best,LowerBound=lower,Optimal=true};

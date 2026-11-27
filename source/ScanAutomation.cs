@@ -23,6 +23,7 @@ namespace KavrosClueHelper
         private void InitializeTracking()
         {
             positionReader=new MinimapPositionReader(assetPath);
+            positionReader.UseInterface(preferences.LegacyInterface);
             trackingWorker.DoWork+=delegate(object sender,DoWorkEventArgs e)
             {
                 TrackingJob job=(TrackingJob)e.Argument;var priority=Thread.CurrentThread.Priority;
@@ -43,13 +44,15 @@ namespace KavrosClueHelper
                 // A delayed result never revives a stale player box.
                 if(job.Match!=null&&(DateTime.UtcNow-job.CapturedAt).TotalMilliseconds>1500)
                 {
-                    // A slow first acquisition locates the viewport only. Read a
-                    // fresh crop before confirming/displaying the player's box.
-                    trackedMinimap=Rectangle.Inflate(job.Match.Viewport,5,5);nextFullTracking=DateTime.UtcNow.AddSeconds(6);nextTracking=DateTime.MinValue;
+                    // A slow result is not drawn as the live box. It stays the
+                    // seed for the next search, and the crop stays wide enough
+                    // to cover a short run.
+                    trackedMinimap=Rectangle.Inflate(job.Match.Viewport,30,30);nextFullTracking=DateTime.UtcNow.AddSeconds(6);nextTracking=DateTime.MinValue;
+                    positionReader.KeepSeed(job.Match);
                     floatingPanel.PrepareTrackingRecheck();return;
                 }
                 floatingPanel.ApplyTracking(job.Match,job.Region.Id,job.CapturedAt);
-                if(job.Match!=null){trackingMisses=0;trackedMinimap=Rectangle.Inflate(job.Match.Viewport,5,5);}
+                if(job.Match!=null){trackingMisses=0;trackedMinimap=Rectangle.Inflate(job.Match.Viewport,30,30);}
                 else if(++trackingMisses>=2)trackedMinimap=Rectangle.Empty;
                 nextTracking=DateTime.UtcNow.AddMilliseconds(100);
                 }
@@ -87,9 +90,12 @@ namespace KavrosClueHelper
                 Bitmap frame=ScreenReader.Capture(screen);if(full)nextFullTracking=now.AddSeconds(6);
                 foreach(System.Windows.Forms.Form surface in new System.Windows.Forms.Form[]{this,floatingPanel,notice})
                 {
-                    if(surface==null||!surface.Visible)continue;
-                    Rectangle cover=Rectangle.Intersect(surface.Bounds,screen);cover.Offset(-screen.X,-screen.Y);
-                    if(cover.Width>0&&cover.Height>0)using(Graphics g=Graphics.FromImage(frame))g.FillRectangle(Brushes.Black,cover);
+                    if(surface==null||!surface.Visible||!surface.IsHandleCreated)continue;
+                    Rectangle overlap=Rectangle.Intersect(surface.Bounds,screen);
+                    if(overlap.Width<1||overlap.Height<1)continue;
+                    if(!GameVisibility.Any(overlap,delegate(Point point){return WindowLocator.AtPoint(surface.Handle,point,IntPtr.Zero);}))continue;
+                    Rectangle cover=overlap;cover.Offset(-screen.X,-screen.Y);
+                    using(Graphics g=Graphics.FromImage(frame))g.FillRectangle(Brushes.Black,cover);
                 }
                 foreach(Rectangle foreign in WindowLocator.ForeignCovers(screen))
                 {

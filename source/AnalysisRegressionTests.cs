@@ -18,6 +18,7 @@ namespace KavrosClueHelper
             {
                 string assets=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets");
                 PuzzleAnalysisEngine engine=new PuzzleAnalysisEngine(assets);
+                engine.UseLegacy(true);
                 long initialTime,cachedTime;
                 using(Bitmap tower=TestFixtures.TowerModal("rev944"))
                 {

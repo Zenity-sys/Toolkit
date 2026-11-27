@@ -59,10 +59,12 @@ namespace KavrosClueHelper
                     using(AnalysisResult result=engine.Analyze(game,3000,false,CancellationToken.None))
                     { Check(result.Plan!=null && result.Plan.Puzzle.Master!=null && result.Plan.Puzzle.Master.Id==clue.Id,"switches to next clue on a full-resolution game frame"); longest=Math.Max(longest,result.Milliseconds); }
                 }
+                engine.UseLegacy(true);
                 using(Bitmap original=TestFixtures.LockboxImage("rev944")) using(Bitmap game=new Bitmap(2560,1440))
                 {
                     using(Graphics g=Graphics.FromImage(game)) { g.Clear(Color.FromArgb(34,57,79));g.DrawImageUnscaled(original,990,510); }
                     using(AnalysisResult result=engine.Analyze(game,3000,false,CancellationToken.None)) Check(result.Plan!=null && result.Plan.Puzzle.Kind==PuzzleKind.Lockbox,"switches from master map back to puzzle guidance");
+                engine.UseLegacy(false);
                 }
                 foreach(var example in new[]{new {Name="laugh-alternate.png",Id=236},new {Name="cheer-alternate.png",Id=233}})
                 using(Bitmap image=new Bitmap(Path.Combine(fixtures,example.Name)))
@@ -109,6 +111,7 @@ namespace KavrosClueHelper
                     foreach(int height in new[]{0,1,3,5})
                     {
                         int[] entered=new int[25];entered[0]=height;
+                        engine.UseLegacy(true);
                         using(Bitmap changed=TestFixtures.TowerModal("rev944",false,false,entered,clues))
                         using(AnalysisResult reread=engine.Analyze(changed,6000+sample,false,CancellationToken.None))
                         {
@@ -116,6 +119,7 @@ namespace KavrosClueHelper
                             Check(reread.Plan.Towers[0].SequenceEqual(selected),"selected tower answer stays fixed as entered heights change");
                             if(pinned==null) pinned=reread.Plan.Towers; else Check(Object.ReferenceEquals(pinned,reread.Plan.Towers),"ambiguous tower reuses cached solutions");
                         }
+                        engine.UseLegacy(false);
                     }
                 }
                 File.AppendAllText(report,"MASTER / TOWER REGRESSIONS PASS: "+assertions+" assertions.\r\nAll eight supplied master clues, alternate captures, six sizes, 2560x1440 automatic switching, offline map cards, scan recognition and both supplied ambiguous Towers checked.\r\nLongest supported clue recognition in this run: "+longest+" ms.\r\nNo windows were shown or application input sent.\r\n");

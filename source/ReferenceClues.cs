@@ -67,6 +67,13 @@ namespace KavrosClueHelper
         }
         private static List<Rectangle> Papers(Pixels p,bool trim=true)
         {
+            bool ignored;
+            return Papers(p,trim,out ignored);
+        }
+        private static List<Rectangle> Papers(Pixels p,bool trim,out bool scrollFirst)
+        {
+            scrollFirst=false;
+            var scrolls=ParagraphVision.FindScrolls(p);
             var papers=ParagraphVision.FindPapers(p);
             for(int i=0;i<papers.Count;i++)
             {
@@ -89,13 +96,33 @@ namespace KavrosClueHelper
             }
             var framed=new List<Rectangle>();
             var plain=new List<Rectangle>();
+            foreach(Rectangle scroll in scrolls)
+            {
+                Rectangle sheet=TrimToPaper(p,scroll);
+                if(sheet.Width>=180&&sheet.Height>=90)
+                {
+                    if(framed.Count==0)scrollFirst=true;
+                    framed.Add(sheet);
+                }
+            }
             foreach(Rectangle r in candidates)
             {
+                if(ParagraphVision.SkipClueSheet(r,p.Width))continue;
                 if(!HasMysteriousFrame(p,r)){plain.Add(r);continue;}
-                framed.Add(TrimToPaper(p,r));
+                Rectangle sheet=TrimToPaper(p,r);
+                bool same=false;
+                foreach(Rectangle have in framed)if(SameSheet(have,sheet)){same=true;break;}
+                if(!same)framed.Add(sheet);
             }
             framed.AddRange(plain);
             return framed;
+        }
+        static bool SameSheet(Rectangle a,Rectangle b)
+        {
+            Rectangle hit=Rectangle.Intersect(a,b);
+            if(hit.Width<=0||hit.Height<=0)return false;
+            int small=Math.Min(a.Width*a.Height,b.Width*b.Height);
+            return small>0&&hit.Width*hit.Height>=small*0.55;
         }
         // The current clue window is a dark "MYSTERIOUS CLUE SCROLL" frame
         // around parchment. Scene roofs are the same colour, so a framed
@@ -117,11 +144,19 @@ namespace KavrosClueHelper
             for(int y=r.Top+r.Height/5;y<r.Bottom-r.Height/5;y+=8)
             {
                 sideN++;
-                int lx=Math.Max(0,r.Left-8),rx=Math.Min(p.Width-1,r.Right+7);
-                Color left=p.Get(lx,y),right=p.Get(rx,y);
-                if((left.R+left.G+left.B)/3<80&&(right.R+right.G+right.B)/3<80)sides++;
+                // The frame is only 7-10px and can sit behind a bright bevel,
+                // so look across that band instead of one pixel 8px outside.
+                if(FrameSide(p,r.Left,y,true)&&FrameSide(p,r.Right,y,false))sides++;
             }
             return bandN>0&&band*1.0/bandN>=0.55&&sideN>0&&sides*1.0/sideN>=0.45;
+        }
+        static bool FrameSide(Pixels p,int edge,int y,bool left)
+        {
+            int x0=left?Math.Max(0,edge-18):Math.Max(0,edge-2);
+            int x1=left?Math.Min(p.Width-1,edge+2):Math.Min(p.Width-1,edge+18);
+            int dark=0;
+            for(int x=x0;x<=x1;x+=2){Color c=p.Get(x,y);if((c.R+c.G+c.B)/3<80)dark++;}
+            return dark>=2;
         }
         private static Rectangle TrimToPaper(Pixels p,Rectangle r)
         {
@@ -174,6 +209,22 @@ namespace KavrosClueHelper
                 if(known.Contains(word)||word.All(char.IsDigit))kept.Add(word);
             return kept.Count==0?text:String.Join(" ",kept.ToArray());
         }
+        static bool LetterBagWindow(string normalized, string bag)
+        {
+            if(bag==null||bag.Length<4)return false;
+            string[] words=normalized.Split(new[]{' '},StringSplitOptions.RemoveEmptyEntries);
+            for(int i=0;i<words.Length;i++)
+            {
+                string joined="";
+                for(int j=i;j<words.Length&&joined.Length<=bag.Length;j++)
+                {
+                    joined+=words[j];
+                    if(joined.Length==bag.Length&&Letters(joined)==bag)return true;
+                    if(joined.Length>bag.Length)break;
+                }
+            }
+            return false;
+        }
         static double WindowScore(string hay, string needle)
         {
             if(hay.Length==0||needle.Length==0)return 0;
@@ -206,12 +257,18 @@ namespace KavrosClueHelper
             // A bare anagram such as "R AK MI" is shorter than eight characters
             // after spaces are collapsed, so it still has to be matched.
             if(text.Length<8 && letters.Length<4)return null;
-            var dictionary=Clues.SelectMany(c=>c.Text.Concat(c.Anagrams)).SelectMany(t=>Normalize(t).Split(new[]{' '},StringSplitOptions.RemoveEmptyEntries));
+            var pieces=new List<string>();
+            foreach(ReferenceClue clue in Clues)
+            {
+                foreach(string part in clue.Text)pieces.Add(part);
+                foreach(string part in clue.Anagrams){pieces.Add(part);pieces.Add(Normalize(part).Replace(" ",""));}
+            }
+            var dictionary=pieces.SelectMany(t=>Normalize(t).Split(new[]{' '},StringSplitOptions.RemoveEmptyEntries));
             string cleaned=KeepKnownWords(text,dictionary);
             double best=0,runner=0;ReferenceClue winner=null;
             foreach(ReferenceClue c in Clues)
             {
-                if(c.Type=="map"||c.Card.Id==188||c.Card.Id==900001)continue;
+                if(c.Type=="map"||c.Card.Id==900001)continue;
                 double score=c.Text.Max(t=>WindowScore(cleaned,Normalize(t)));
                 if(c.Type=="coordinates")
                 {
@@ -221,15 +278,21 @@ namespace KavrosClueHelper
                 }
                 if(c.Type=="anagram")
                 {
-                    string flat=cleaned.Replace(" ","");
+                    string flat=text.Replace(" ","");
                     double anagram=0;
                     foreach(string a in c.Anagrams)
                     {
                         string n=Normalize(a);
-                        if(cleaned==n||cleaned.EndsWith(" "+n)||cleaned.EndsWith(n))anagram=1;
-                        else anagram=Math.Max(anagram,WindowScore(cleaned,n));
-                        string nLetters=Letters(n);
-                        if(letters.Length>=4 && Math.Abs(text.Length-n.Length)<=8 && letters==nLetters)anagram=1;
+                        string nFlat=n.Replace(" ","");
+                        // Spacing is not part of the anagram. "ARC OLINE" and
+                        // "ARCOLINE" are the same name, including after the intro.
+                        // A packed name has to be long enough that it is not an
+                        // accidental piece of a normal sentence. An exact clue
+                        // line still outranks a letter-bag hit.
+                        bool packed=nFlat.Length>=6&&(flat==nFlat||flat.EndsWith(nFlat)||flat.Contains(nFlat));
+                        if(nFlat.Length>0&&(text==n||text.EndsWith(" "+n)||packed))anagram=1;
+                        else anagram=Math.Max(anagram,WindowScore(text,n));
+                        if(anagram<1&&LetterBagWindow(text,Letters(n)))anagram=Math.Max(anagram,0.96);
                     }
                     if(anagram>=0.9)score=Math.Max(score,anagram);
                     else if(!flat.Contains("anagram"))score=0;
@@ -252,36 +315,54 @@ namespace KavrosClueHelper
         }
         private DetectedPuzzle Result(ReferenceClue clue,Rectangle paper)
         {return clue==null?null:new DetectedPuzzle{Kind=PuzzleKind.EmoteClue,Master=clue.Card,Bounds=paper,Scale=1,Confidence=0.96,Message=clue.Card.Tier+" "+clue.Type};}
+        public DetectedPuzzle ReadSheet(Bitmap image,Pixels pixels,Rectangle scroll)
+        {
+            Rectangle paper=TrimToPaper(pixels,scroll);
+            if(paper.Width<180||paper.Height<90)paper=scroll;
+            if(ParagraphVision.SkipClueSheet(paper,pixels.Width,true))return null;
+            return ReadPaper(image,pixels,paper);
+        }
         public DetectedPuzzle Detect(Bitmap image,Pixels pixels)
         {
-            foreach(Rectangle paper in Papers(pixels).Take(3))
+            bool scrollFirst;
+            foreach(Rectangle paper in Papers(pixels,true,out scrollFirst).Take(3))
             {
-                SearchCancellation.Check();ulong hash=pixels.Hash(paper);
-                if(hasCache&&cached!=null&&cachedSize==image.Size&&cachedPaper==paper&&cachedHash==hash)return Result(cached,paper);
-                ReferenceClue known;if(recent.TryGetValue(hash,out known)&&known!=null)return Result(known,paper);
-                ReferenceClue found=null;
-                MapSignature signature=MapSignature.Read(pixels,paper);
-                if(signature!=null)
-                {
-                    var ranked=maps.Concat(variants).GroupBy(m=>m.Key).Select(group=>new{Id=group.Key,Score=group.Max(m=>m.Value.Compare(signature))}).OrderByDescending(v=>v.Score).Take(2).ToArray();
-                    MapScores=paper+" "+signature.Info+" "+String.Join(" / ",ranked.Select(v=>v.Id+":"+v.Score.ToString("0.000")));
-                    if(ranked.Length>0&&ranked[0].Id!=188&&ranked[0].Id!=900001&&ranked[0].Score>=0.83&&(ranked.Length<2||ranked[0].Score-ranked[1].Score>=0.07))found=Clues.First(c=>c.Card.Id==ranked[0].Id);
-                }
-                if(found==null)
-                {
-                    if(Progress!=null)Progress("Reading clue...");
-                    // Upscale the parchment, retaining antialiasing and real ink.
-                    int mx=Math.Max(4,paper.Width/10),my=Math.Max(4,paper.Height/8);
-                    Rectangle inner=new Rectangle(paper.X+mx,paper.Y+my,Math.Max(8,paper.Width-2*mx),Math.Max(8,paper.Height-2*my));
-                    double scale=Math.Min(2,2000.0/Math.Max(inner.Width,inner.Height));
-                    using(Bitmap crop=Pixels.Crop(image,inner,new Size((int)(inner.Width*scale),(int)(inner.Height*scale))))
-                    {LastText=ocr.Read(crop);LastError=ocr.Unavailable;found=MatchText(LastText);}
-                }
-                cachedHash=hash;cachedSize=image.Size;cachedPaper=paper;cached=found;hasCache=found!=null;
-                if(found!=null){recent[hash]=found;recentOrder.Enqueue(hash);while(recentOrder.Count>24)recent.Remove(recentOrder.Dequeue());}
-                if(found!=null)return Result(found,paper);
+                // FindScrolls already proved this is a titled sheet. The frame
+                // can sit further out than the title ink, so do not re-test it
+                // with the small-sheet cap.
+                bool framed=scrollFirst||HasMysteriousFrame(pixels,paper);
+                scrollFirst=false;
+                if(ParagraphVision.SkipClueSheet(paper,pixels.Width,framed))continue;
+                DetectedPuzzle found=ReadPaper(image,pixels,paper);
+                if(found!=null)return found;
             }
             return null;
+        }
+        DetectedPuzzle ReadPaper(Bitmap image,Pixels pixels,Rectangle paper)
+        {
+            SearchCancellation.Check();ulong hash=pixels.Hash(paper);
+            if(hasCache&&cached!=null&&cachedSize==image.Size&&cachedPaper==paper&&cachedHash==hash)return Result(cached,paper);
+            ReferenceClue known;if(recent.TryGetValue(hash,out known)&&known!=null)return Result(known,paper);
+            ReferenceClue found=null;
+            MapSignature signature=MapSignature.Read(pixels,paper);
+            if(signature!=null)
+            {
+                var ranked=maps.Concat(variants).GroupBy(m=>m.Key).Select(group=>new{Id=group.Key,Score=group.Max(m=>m.Value.Compare(signature))}).OrderByDescending(v=>v.Score).Take(2).ToArray();
+                MapScores=paper+" "+signature.Info+" "+String.Join(" / ",ranked.Select(v=>v.Id+":"+v.Score.ToString("0.000")));
+                if(ranked.Length>0&&ranked[0].Id!=900001&&ranked[0].Score>=0.83&&(ranked.Length<2||ranked[0].Score-ranked[1].Score>=0.07))found=Clues.First(c=>c.Card.Id==ranked[0].Id);
+            }
+            if(found==null)
+            {
+                if(Progress!=null)Progress("Reading clue...");
+                int mx=Math.Max(4,paper.Width/10),my=Math.Max(4,paper.Height/8);
+                Rectangle inner=new Rectangle(paper.X+mx,paper.Y+my,Math.Max(8,paper.Width-2*mx),Math.Max(8,paper.Height-2*my));
+                double scale=Math.Min(2,2000.0/Math.Max(inner.Width,inner.Height));
+                using(Bitmap crop=Pixels.Crop(image,inner,new Size((int)(inner.Width*scale),(int)(inner.Height*scale))))
+                {LastText=ocr.Read(crop);LastError=ocr.Unavailable;found=MatchText(LastText);}
+            }
+            cachedHash=hash;cachedSize=image.Size;cachedPaper=paper;cached=found;hasCache=found!=null;
+            if(found!=null){recent[hash]=found;recentOrder.Enqueue(hash);while(recentOrder.Count>24)recent.Remove(recentOrder.Dequeue());}
+            return Result(found,paper);
         }
     }
     internal sealed class MapSignature

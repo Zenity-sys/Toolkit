@@ -35,9 +35,18 @@ jobs:
           VPK_SPLASH: assets/branding/kavros-splash.png
         run: ./source/pack-release.ps1
 
+      - name: Release title
+        id: title
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -match '^v(\d+)\.(\d+)\.0$') { $name = "v$($Matches[1]).$($Matches[2])" } else { $name = $tag }
+          "name=$name" >> $env:GITHUB_OUTPUT
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ steps.title.outputs.name }}
           body_path: release-notes.md
           fail_on_unmatched_files: true
           files: release-out/*

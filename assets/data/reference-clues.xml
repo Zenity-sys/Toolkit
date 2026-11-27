@@ -530,6 +530,8 @@ Tile 2790, 3181 | level 0</details>
 Alternatively: Ctrl+T &gt; Skilling &gt; Agility &gt; 1/85 - Gnome Course, run north-west to the referee.
 Final step: Run north-east to the Gnomeball field gate.
 Clue: Talk to Gnome ball referee at the gate of the Gnomeball Field.
+Challenge: What is 57 x 89 + 23?
+Answer: 5096
 Tile 2384, 3487 | level 0</details>
   </clue>
   <clue id="128" tier="medium" type="simple" heading="Talk to Hazelmere east of Yanille" action="Talk to Hazelmere" x="2675" y="3085" width="5" height="5" level="1">
@@ -625,11 +627,7 @@ Final step: Run west to the tavern west of the river, then go upstairs in the ta
 Clue: Search Drawers (West-bank tavern, East Ardougne).
 Tile 2575, 3326 | level 1</details>
   </clue>
-  <clue id="188" tier="medium" type="cryptic" heading="Fishing Platform off Witchaven" action="Search Crate" x="2764" y="3273" width="1" height="1" level="0">
-    <text>Try not to step on any aquatic nasties while searching this crate.</text>
-    <details>Not available on Kavros.
-Clue: Search Crate (Fishing Platform off Witchaven).</details>
-  </clue>
+  <!-- Clue 188, the Fishing Platform crate ("Try not to step on any aquatic nasties"), is not on Kavros. Add it back if players start receiving it. -->
   <clue id="189" tier="medium" type="cryptic" heading="Zanaris furnace" action="Search Crate" x="2399" y="4471" width="1" height="1" level="0">
     <text>After a hard day of spraying back the vegetation, you mite want to pop to the nearby forge and search the crates.</text>
     <details>Fastest: Ctrl+T or ;;t &gt; Locations &gt; Zanaris.
@@ -930,17 +928,17 @@ Tile 2954, 3512 | level 0</details>
   </clue>
   <clue id="32" tier="hard" type="cryptic" heading="Ranging Guild haystack, Hemenster" action="Search Haystack" x="2671" y="3416" width="1" height="1" level="0">
     <text>If you look closely enough, it seems that the archers have lost more than their needles.</text>
-    <details>Fastest: Seers' Village lodestone.
-Final step: Head south-west to the Ranging Guild, east of Hemenster. Enter the guild and search the large haystack by the southern fence.
-Clue: Search Haystack (Ranging Guild haystack, Hemenster).
-Tile 2671, 3416 | level 0</details>
+    <details>Fastest: Combat bracelet &gt; Ranging Guild.
+Alternatively: Seers' Village lodestone, head south-west.
+Final step: Enter the guild and search the large haystack by the southern fence.
+Clue: Search Haystack (Ranging Guild haystack, Hemenster).</details>
   </clue>
   <clue id="39" tier="hard" type="cryptic" heading="Talk to Lord Iorwerth in Prifddinas" action="Talk to Lord Iorwerth" x="2185" y="3283" width="3" height="3" level="1">
     <text>There is no 'worthier' lord.</text>
-    <details>Fastest: Prifddinas lodestone.
-Final step: Run south from the lodestone to the clue spot. Use the stairs to floor 1 above ground.
-Clue: Talk to Lord Iorwerth in Prifddinas. Talk to Lord Iorwerth at Iorwerth Camp. An NPC may give you a puzzle box. Open it for the puzzle helper.
-Tile 2185, 3283 | level 1</details>
+    <details>Fastest: Attuned crystal teleport seed &gt; Iorwerth.
+Alternatively: Prifddinas lodestone, run south.
+Final step: Use the stairs to floor 1 above ground. Talk to Lord Iorwerth.
+Clue: Talk to Lord Iorwerth in Prifddinas. Talk to Lord Iorwerth at Iorwerth Camp. An NPC may give you a puzzle box. Open it for the puzzle helper.</details>
   </clue>
   <clue id="139" tier="hard" type="cryptic" heading="Edgeville Monastery" action="Talk to Abbot Langley" x="3055" y="3482" width="5" height="6" level="0">
     <text>I am head of the abbey with a cold breeze from the west.</text>
@@ -962,12 +960,11 @@ Tile 3011, 3223 | level 0</details>
   </clue>
   <clue id="141" tier="hard" type="cryptic" heading="Exam Centre, south of the Dig Site" action="Talk to Examiner" x="3351" y="3342" width="9" height="8" level="0">
     <text>Often sought out by scholars of histories past, find me where words of wisdom speak volumes.</text>
-    <details>Fastest: Ancient spellbook &gt; Senntisten Teleport (Dig Site temple).
-Alternatively: Dig site pendant &gt; Exam Centre, run west to the Exam Centre.
-Third option: Ctrl+T &gt; Skilling &gt; Archaeology &gt; Archaeology Guild, run south-east to the Exam Centre.
-Final step: Run east to the Exam Centre, then speak to an examiner.
-Clue: Talk to Examiner (Exam Centre, south of the Dig Site). An NPC may give you a puzzle box. Open it for the puzzle helper.
-Tile 3351, 3342 | level 0</details>
+    <details>Fastest: Dig site pendant &gt; Exam Centre.
+Alternatively: Ctrl+T &gt; Skilling &gt; Archaeology &gt; Archaeology Guild, run south-east to the Exam Centre.
+Third option: Ancient spellbook &gt; Senntisten Teleport (Dig Site temple), run east to the Exam Centre.
+Final step: Speak to an examiner.
+Clue: Talk to Examiner (Exam Centre, south of the Dig Site). An NPC may give you a puzzle box. Open it for the puzzle helper.</details>
   </clue>
   <clue id="142" tier="hard" type="cryptic" heading="House by Baxtorian Falls" action="Search Boxes" x="2523" y="3493" width="1" height="1" level="1">
     <text>A great view: watch the rapidly drying hides get splashed. Check the box you are sitting on.</text>
@@ -988,12 +985,11 @@ Tile 2134, 5162 | level 0</details>
   </clue>
   <clue id="144" tier="hard" type="cryptic" heading="Menaphos Worker district" action="Talk to Hamid" x="3131" y="2800" width="5" height="5" level="0">
     <text>Identify the back of this over-acting brother. (He's a long way from home.)</text>
-    <details>Fastest: Menaphos lodestone.
-Alternatively: Amulet of farming &gt; Bushes and Cacti Patches &gt; 7. Menaphos Cactus Patch, run north-west to the waterfront.
-Third option: Bandit Camp lodestone, run south-west to Menaphos.
-Final step: Run north-west to the west waterfront of the Worker district, then speak to Hamid at the waterfront.
-Clue: Talk to Hamid (Menaphos Worker district). An NPC may give you a puzzle box. Open it for the puzzle helper.
-Tile 3131, 2800 | level 0</details>
+    <details>Fastest: Ctrl+T or ;;t &gt; Skilling &gt; Firemaking &gt; Menaphos Bonfire, then run west to Hamid at the west waterfront.
+Alternatively: Menaphos lodestone, then run north-west to the west waterfront.
+Third option: Amulet of farming &gt; Bushes and Cacti Patches &gt; 7. Menaphos Cactus Patch, then run north-west to the waterfront.
+Final step: Run west from the bonfire to Hamid at the west waterfront.
+Clue: Talk to Hamid (Menaphos Worker district). An NPC may give you a puzzle box. Open it for the puzzle helper.</details>
   </clue>
   <clue id="145" tier="hard" type="cryptic" heading="Nardah carpet stop" action="Dig" x="3396" y="2918" width="1" height="1" level="0">
     <text>As you desert this town, keep an eye out for a set of spines that could ruin nearby rugs: dig carefully around the greenery.</text>
@@ -1016,32 +1012,28 @@ Tile 2467, 3426 | level 0</details>
   </clue>
   <clue id="147" tier="hard" type="cryptic" heading="Mine carts in the Dwarven Mine" action="Search Mine Cart" x="3041" y="9820" width="1" height="1" level="0">
     <text>It seems to have reached the end of the line, and it's still empty.</text>
-    <details>Fastest: Ctrl+T &gt; Skilling &gt; Smithing &gt; Artisan's Workshop.
-Alternatively: Skills necklace &gt; Mining Guild, run north-east to the mine stairs.
-Third option: 120 Dungeoneering cape &gt; 2. Dwarven mine hidden mine, run north to the coal rocks.
-Final step: Run north to the Dwarven Mine stairs in north-east Falador. Down in the mine go east to the coal rocks and search the northern mine cart.
-Clue: Search Mine Cart (Mine carts in the Dwarven Mine).
-Tile 3041, 9820 | level 0</details>
+    <details>Fastest: Ctrl+T &gt; Skilling &gt; Mining &gt; Coal.
+Alternatively: Ctrl+T &gt; Skilling &gt; Smithing &gt; Artisan's Workshop, run north to the Dwarven Mine stairs in north-east Falador.
+Third option: Skills necklace &gt; Mining Guild, run north-east to the mine stairs.
+Final step: Down in the mine go east to the coal rocks and search the northern mine cart.
+Clue: Search Mine Cart (Mine carts in the Dwarven Mine).</details>
   </clue>
   <clue id="148" tier="hard" type="cryptic" heading="Sorcerer's Tower, south of Seers' Village" action="Search Bookcase" x="2702" y="3409" width="1" height="1" level="1">
     <text>Read 'How to Breed Scorpions' By O.W. Thathurt.</text>
-    <details>Fastest: Ctrl+T &gt; Skilling &gt; Woodcutting &gt; Elder tree (Legends Guild).
-Alternatively: Amulet of farming &gt; Herb Patches &gt; 2. Ardougne Herb Patch, run north-east to the tower.
-Third option: Fairy ring BLR (Legends' Guild), run north-west to the tower.
-Final step: Run north-west to the tower. Go upstairs and search the bookcase on the north wall. Use the stairs to floor 1 above ground.
-Clue: Search Bookcase (Sorcerer's Tower, south of Seers' Village).
-Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
-Tile 2702, 3409 | level 1</details>
+    <details>Fastest: Ctrl+T &gt; Skilling &gt; Archaeology &gt; Stormguard Citadel.
+Alternatively: Ctrl+T &gt; Skilling &gt; Woodcutting &gt; Elder tree (Legends' Guild), run north-west to the tower.
+Third option: Amulet of farming &gt; Herb Patches &gt; 2. Ardougne Herb Patch, run north-east to the tower.
+Final step: Go upstairs and search the bookcase on the north wall. Use the stairs to floor 1 above ground.
+Clue: Search Bookcase (Sorcerer's Tower, south of Seers' Village).</details>
   </clue>
   <clue id="149" tier="hard" type="cryptic" heading="Wizards' Tower library" action="Search Bookcase" x="3094" y="3153" width="2" height="0" level="0">
     <text>Probably filled with books on magic.</text>
-    <details>Fastest: Fairy ring DIS (Wizards' Tower) (portable fairy ring required to be the fastest).
-Alternatively: Skills necklace &gt; Runecrafting Guild, run west to the tower.
+    <details>Fastest: Skills necklace &gt; Runecrafting Guild, right-click the beam and choose bottom floor.
+Alternatively: Fairy ring DIS (Wizards' Tower), run north to the tower.
 Third option: Ctrl+T &gt; Locations &gt; Wizard's Tower, run south-west to the tower.
-Final step: Run north to the tower.
+Final step: Search the south-west bookcase on the ground floor.
 Clue: Search the south-west bookcase on the ground floor.
-Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
-Tile 3094, 3153 | level 0</details>
+Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.</details>
   </clue>
   <clue id="150" tier="hard" type="cryptic" heading="Grand Tree, Tree Gnome Stronghold" action="Talk to Heckel Funch" x="2487" y="3487" width="7" height="3" level="1">
     <text>Citric cellar.</text>
@@ -1073,13 +1065,12 @@ Tile 2832, 9586 | level 0</details>
   </clue>
   <clue id="153" tier="hard" type="cryptic" heading="Ruins of Uzer" action="Search Crate" x="3478" y="3091" width="1" height="1" level="0">
     <text>His head might be hollow, but the crates nearby are filled with surprises.</text>
-    <details>Fastest: Fairy ring DLQ (north Kharidian Desert) (portable fairy ring required to be the fastest).
-Alternatively: Traveller's necklace &gt; Desert Eagle's Eyrie, run south-east to Uzer.
-Third option: Ctrl+T &gt; Locations &gt; Dominion Tower, run east to Uzer across the desert.
-Final step: Run north-east to Uzer. West of the Golem quest start, search the boxes.
+    <details>Fastest: Ctrl+T &gt; Skilling &gt; Mining &gt; Necrite (70), run south-east.
+Alternatively: Fairy ring DLQ (north Kharidian Desert), run north-east to Uzer.
+Third option: Traveller's necklace &gt; Desert Eagle's Eyrie, run south-east to Uzer.
+Final step: West of the Golem quest start, search the boxes.
 Clue: Search Crate (Ruins of Uzer).
-Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
-Tile 3478, 3091 | level 0</details>
+Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.</details>
   </clue>
   <clue id="154" tier="hard" type="cryptic" heading="Varrock Sewers, moss giants" action="Dig" x="3161" y="9905" width="1" height="1" level="0">
     <text>My giant guardians below the market streets would be fans of rock and roll, if only they could grab hold of it. Dig near my purple smoke!</text>
@@ -1102,13 +1093,12 @@ Tile 2969, 2975 | level 0</details>
   </clue>
   <clue id="156" tier="hard" type="cryptic" heading="East Ardougne Zoo" action="Dig" x="2598" y="3267" width="1" height="1" level="0">
     <text>The beasts to my east snap claws and tails. The rest to my west can slide and eat fish. The force to my north will jump and they'll wail, Come dig by my fire and make a wish.</text>
-    <details>Fastest: Fairy ring BIS (Ardougne Zoo) (portable fairy ring required to be the fastest).
-Alternatively: Ctrl+T &gt; Locations &gt; Ardougne Monastery, run north to the zoo.
-Third option: Ardougne lodestone, run south-west to the zoo.
-Final step: Run west to the zoo.
+    <details>Fastest: Clocktower teleport (from clue scrolls only), run north a few steps.
+Alternatively: Fairy ring BIS (Ardougne Zoo), run west to the zoo.
+Third option: Ctrl+T &gt; Locations &gt; Ardougne Monastery, run north to the zoo.
+Final step: Dig beside the torch between the scorpion and penguin pens.
 Clue: Dig beside the torch between the scorpion and penguin pens.
-Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
-Tile 2598, 3267 | level 0</details>
+Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.</details>
   </clue>
   <clue id="157" tier="hard" type="cryptic" heading="Barbarian Outpost shore" action="Dig" x="2519" y="3594" width="1" height="1" level="0">
     <text>You don't need to go hopping mad - or take steps - to get to this treasure: just be totally shellfish.</text>
@@ -1149,17 +1139,17 @@ Tile 2576, 3464 | level 0</details>
   </clue>
   <clue id="161" tier="hard" type="cryptic" heading="Lumbridge Castle cellar" action="Search Crate" x="3219" y="9617" width="1" height="1" level="0">
     <text>You will need to under-cook to solve this one.</text>
-    <details>Fastest: Lumbridge lodestone.
+    <details>Fastest: Ring of respawn &gt; Lumbridge.
+Alternatively: Lumbridge lodestone.
 Final step: Go west into the castle kitchen. Climb down the trapdoor. Search the crate in the south-east corner of the cellar.
-Clue: Search Crate (Lumbridge Castle cellar).
-Tile 3219, 9617 | level 0</details>
+Clue: Search Crate (Lumbridge Castle cellar).</details>
   </clue>
   <clue id="162" tier="hard" type="cryptic" heading="Desert Bandit Camp general store" action="Search Crate" x="3178" y="2987" width="1" height="1" level="0">
     <text>The cheapest water for miles around, but they react badly to religious icons.</text>
-    <details>Fastest: Bandit Camp lodestone.
-Final step: Run north-west from the lodestone, then enter the general store and search the crates inside.
-Clue: Search Crate (Desert Bandit Camp general store).
-Tile 3178, 2987 | level 0</details>
+    <details>Fastest: Bandit Camp teleport scroll (from clues or the GE), run north-west to the general store.
+Alternatively: Bandit Camp lodestone, run north-west to the general store.
+Final step: Enter the general store and search the crates inside.
+Clue: Search Crate (Desert Bandit Camp general store).</details>
   </clue>
   <clue id="163" tier="hard" type="cryptic" heading="Elemental Workshop, Seers' Village" action="Search Crate" x="2723" y="9891" width="1" height="1" level="0">
     <text>You have all of the elements available to solve this clue. Fortunately you do not have to go as far as to stand in a draft.</text>
@@ -1181,12 +1171,11 @@ Tile 2561, 3323 | level 0</details>
   </clue>
   <clue id="165" tier="hard" type="cryptic" heading="Aggie's house, Draynor Village" action="Dig" x="3083" y="3257" width="1" height="1" level="0">
     <text>Aggie I see, Lonely and southern I feel, I am neither inside nor outside the house, yet no house would be complete without me. The treasure lies beneath me!</text>
-    <details>Fastest: Draynor Village lodestone.
-Alternatively: Amulet of glory &gt; Draynor Village, run north-east to Aggie's house.
-Third option: Ctrl+T &gt; Skilling &gt; Farming &gt; Falador Herb, run south-east to Draynor Village.
-Final step: Run south-west to Aggie's house. Stand outside the south window, south of the cauldron, and dig.
-Clue: Dig at Aggie's house, Draynor Village.
-Tile 3083, 3257 | level 0</details>
+    <details>Fastest: Amulet of glory &gt; Draynor Village, run north-east to Aggie's house.
+Alternatively: Ctrl+T &gt; Skilling &gt; Woodcutting &gt; Willow.
+Third option: Draynor Village lodestone, run south-west to Aggie's house.
+Final step: Stand outside the south window, south of the cauldron, and dig.
+Clue: Dig at Aggie's house, Draynor Village.</details>
   </clue>
   <clue id="166" tier="hard" type="cryptic" heading="Basement of Varrock west bank" action="Dig" x="3191" y="9825" width="1" height="1" level="0">
     <text>I am a token of the greatest love. I have no beginning or end. My eye is red, I can fit like a glove. Go to the place where it's money they lend, And dig by the gate to be my friend.</text>
@@ -1216,10 +1205,10 @@ Tile 2849, 3492 | level 1</details>
   </clue>
   <clue id="169" tier="hard" type="cryptic" heading="Lumbridge Castle grounds" action="Talk to Hans" x="3202" y="3205" width="20" height="28" level="0">
     <text>Snah? I feel all confused, like one of those cakes.</text>
-    <details>Fastest: Lumbridge lodestone.
-Final step: Go west to the castle. Talk to Hans as he walks around the castle.
-Clue: Talk to Hans (Lumbridge Castle grounds).
-Tile 3202, 3205 | level 0</details>
+    <details>Fastest: Ring of respawn &gt; Lumbridge.
+Alternatively: Lumbridge lodestone, go west to the castle.
+Final step: Talk to Hans as he walks around the castle.
+Clue: Talk to Hans (Lumbridge Castle grounds).</details>
   </clue>
   <clue id="170" tier="hard" type="cryptic" heading="Lumbridge Castle spinning room" action="Search Drawers" x="3213" y="3216" width="1" height="1" level="1">
     <text>My home is grey, and made of stone, A castle with a search for a meal. Hidden in some drawers I am, across from a wooden wheel.</text>
@@ -1284,12 +1273,11 @@ Tile 2818, 3351 | level 0</details>
   </clue>
   <clue id="216" tier="hard" type="cryptic" heading="Wilderness spider mound" action="Dig" x="3169" y="3887" width="1" height="1" level="0">
     <text>46 is my number. My body is the colour of burnt orange and crawls among those with eight. Three mouths I have, yet I cannot eat. My blinking blue eye hides my grave.</text>
-    <details>Fastest: Edgeville lodestone, then run south-east to the Wilderness lever in the ruined house; pull it to the Deserted Keep.
-Alternatively: Ancient spellbook &gt; Annakarl Teleport (Demonic Ruins), run west to the spider mound.
-Third option: Ctrl+T &gt; Skilling &gt; Agility &gt; 52 - Wilderness Course, run east to the spider mound.
-Final step: Run south-east to the spiders. Find the sapphire spawn and dig beneath it.
-Clue: Dig at Wilderness spider mound.
-Tile 3169, 3887 | level 0</details>
+    <details>Fastest: Amulet of farming &gt; Wilderness herb patch, run north.
+Alternatively: Ctrl+T &gt; Slayer &gt; Abyssal Lords, run north-east.
+Third option: Edgeville lodestone, then run south-east to the Wilderness lever in the ruined house; pull it to the Deserted Keep, then run south-east to the spiders.
+Final step: Find the sapphire spawn and dig beneath it.
+Clue: Dig at Wilderness spider mound.</details>
   </clue>
   <clue id="219" tier="hard" type="cryptic" heading="Deserted Keep, deep Wilderness" action="Dig" x="3154" y="3923" width="1" height="1" level="0">
     <text>If you didn't want to be here and in danger, you should lever things well enough alone.</text>
@@ -1672,10 +1660,10 @@ Tile 2908, 3154 | level 0</details>
   </clue>
   <clue id="229" tier="hard" type="emote" heading="Dance at the cat-doored pyramid in Sophanem" action="Dance" x="3292" y="2781" width="6" height="4" level="0">
     <text>Dance at the cat-doored pyramid in Sophanem. Beware of double agents! Equip a ring of life, an amulet of glory and an adamant two-handed sword.</text>
-    <details>Fastest: Menaphos lodestone.
-Final step: Run north-east from the lodestone to the clue spot.
-Clue: Dance. Wear Ring of life, Uncharged amulet of glory, Adamant 2h sword. Defeat the double agent, then repeat the emote for Uri.
-Tile 3292, 2781 | level 0</details>
+    <details>Fastest: Ctrl+T &gt; Slayer &gt; Corrupted creatures, run north to the pyramid.
+Alternatively: Menaphos lodestone, run north-east to the pyramid.
+Final step: Dance at the cat-doored pyramid, wearing the listed items.
+Clue: Dance. Wear Ring of life, Uncharged amulet of glory, Adamant 2h sword. Defeat the double agent, then repeat the emote for Uri.</details>
   </clue>
   <clue id="230" tier="hard" type="emote" heading="Blow a raspberry in the Fishing Guild bank" action="Raspberry" x="2585" y="3420" width="3" height="4" level="0">
     <text>Blow a raspberry in the Fishing Guild bank. Beware of double agents! Equip an elemental shield, blue dragonhide chaps and a rune warhammer.</text>
@@ -1706,11 +1694,10 @@ Tile 2504, 3636 | level 2</details>
   <clue id="235" tier="hard" type="emote" heading="Yawn in the rogues' general store" action="Yawn" x="3031" y="3728" width="9" height="9" level="0">
     <text>Yawn in the rogues' general store. Beware of double agents! Equip an iron square shield, blue dragonhide vambraces, and an iron pickaxe.</text>
     <text>Yawn near the Wilderness Bandit camp obelisk. Beware of double agents! Equip an iron square shield, blue dragon vambraces and an iron pickaxe.</text>
-    <details>Fastest: Ctrl+T &gt; Slayer &gt; Level 99+ &gt; Abyssal Beasts, step into the obelisk just north of the landing &gt; 3. Level 27.
-Alternatively: Wilderness Crater lodestone, run north-west to the Wilderness Bandit Camp.
-Final step: Walk a few steps south-west to the rogues' general store in the Bandit Camp. Yawn in the store (Noterazzo's Bandit Duty Free), the building just south of the level 27 obelisk.
-Clue: Yawn. Wear Iron square shield, Blue dragonhide vambraces, Iron pickaxe. Defeat the double agent, then repeat the emote for Uri.
-Tile 3031, 3728 | level 0</details>
+    <details>Fastest: Ancient spellbook &gt; Dareeyak Teleport, run east.
+Alternatively: Ctrl+T &gt; Slayer &gt; Level 99+ &gt; Abyssal Beasts, step into the obelisk just north of the landing &gt; 3. Level 27, then walk a few steps south-west to the rogues' general store in the Bandit Camp.
+Final step: Yawn in the store (Noterazzo's Bandit Duty Free), the building just south of the level 27 obelisk.
+Clue: Yawn. Wear Iron square shield, Blue dragonhide vambraces, Iron pickaxe. Defeat the double agent, then repeat the emote for Uri.</details>
   </clue>
   <clue id="243" tier="hard" type="emote" heading="Shrug in the Zamorak temple, found in the eastern Wilderness" action="Shrug" x="3234" y="3603" width="12" height="12" level="0">
     <text>Shrug in the Zamorak temple, found in the eastern Wilderness. Beware of double agents! Equip bronze platelegs, an iron platebody and blue dragonhide vambraces.</text>
@@ -2035,23 +2022,22 @@ Tile 2903, 10206 | level 0</details>
   <clue id="292" tier="hard" type="anagram" heading="Talk to Professor Onglewip on the ground floor of Wizard's Tower" action="Talk to Professor Onglewip" x="3103" y="3146" width="12" height="20" level="0">
     <text>This anagram reveals who to speak to next: Profs Lose Wrong Pie</text>
     <anagram>Profs Lose Wrong Pie</anagram>
-    <details>Fastest: Ctrl+T &gt; Locations &gt; Wizard's Tower.
-Alternatively: Fairy ring DIS (Wizards' Tower), run north-east to the tower.
-Third option: Traveller's necklace &gt; Wizard's Tower, run south to the tower.
-Final step: Run south to Professor Onglewip, then talk to Professor Onglewip on the ground floor of Wizard's Tower.
+    <details>Fastest: Skills necklace &gt; Runecrafting Guild, right-click the beam and choose bottom floor.
+Alternatively: Ctrl+T &gt; Locations &gt; Wizard's Tower, run south to Professor Onglewip.
+Third option: Fairy ring DIS (Wizards' Tower), run north-east to the tower.
+Final step: Talk to Professor Onglewip on the ground floor of Wizard's Tower.
 Clue: Talk to Professor Onglewip on the ground floor of Wizard's Tower. An NPC may give you a puzzle box. Open it for the puzzle helper.
-Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
-Tile 3103, 3146 | level 0</details>
+Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.</details>
   </clue>
   <clue id="293" tier="hard" type="anagram" heading="Talk to Cap'n Izzy No-Beard at the Agility Arena" action="Talk to Cap'n Izzy No-Beard" x="2806" y="3190" width="4" height="3" level="0">
     <text>This anagram reveals who to speak to next: O Birdz A Zany En Pc</text>
     <anagram>O Birdz A Zany En Pc</anagram>
-    <details>Fastest: Karamja lodestone.
-Final step: Run north-east from the lodestone to the clue spot.
+    <details>Fastest: Amulet of farming &gt; Brimhaven fruit tree patch.
+Alternatively: Karamja lodestone, run north-east to the Agility Arena.
+Final step: Talk to Cap'n Izzy No-Beard at the Agility Arena.
 Clue: Talk to Cap'n Izzy No-Beard at the Agility Arena.
 Challenge: How many banana trees are there in the plantation?
-Answer: 33
-Tile 2806, 3190 | level 0</details>
+Answer: 33</details>
   </clue>
   <clue id="295" tier="hard" type="anagram" heading="Talk to Trader Stan in Port Sarim" action="Talk to Trader Stan" x="3032" y="3190" width="3" height="2" level="0">
     <text>This anagram reveals who to speak to next: Red Art Tans</text>
@@ -2064,12 +2050,11 @@ Tile 3032, 3190 | level 0</details>
   <clue id="296" tier="hard" type="anagram" heading="Yanille Wizards' Guild cellar" action="Talk to Wizard Frumscone" x="2587" y="9488" width="3" height="2" level="0">
     <text>This anagram reveals who to speak to next: Or Zinc Fumes Ward</text>
     <anagram>Or Zinc Fumes Ward</anagram>
-    <details>Fastest: Yanille lodestone.
+    <details>Fastest: Modern spellbook &gt; Watchtower Teleport, run south-east to the guild, round to Yanille's east gate.
 Alternatively: Amulet of farming &gt; Bushes and Cacti Patches &gt; 0. Next page &gt; 3. Yanille Hops Patch, run south-east to the guild, entering Yanille by the east gate.
 Third option: Dave's spellbook &gt; Watchtower, run south-east to the guild, round to Yanille's east gate.
-Final step: Run east to the Wizards' Guild, then go down to the cellar and speak to Wizard Frumscone (guild needs 66 Magic).
-Clue: Talk to Wizard Frumscone (Yanille Wizards' Guild cellar). An NPC may give you a puzzle box. Open it for the puzzle helper.
-Tile 2587, 9488 | level 0</details>
+Final step: Go down to the cellar and speak to Wizard Frumscone (guild needs 66 Magic).
+Clue: Talk to Wizard Frumscone (Yanille Wizards' Guild cellar). An NPC may give you a puzzle box. Open it for the puzzle helper.</details>
   </clue>
   <clue id="297" tier="hard" type="anagram" heading="Talk to Bolkoy in Tree Gnome Village" action="Talk to Bolkoy" x="2525" y="3160" width="7" height="5" level="1">
     <text>This anagram reveals who to speak to next: By Look</text>
@@ -2083,7 +2068,7 @@ Answer: 13
 Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
 Tile 2525, 3160 | level 1</details>
   </clue>
-  <clue id="298" tier="hard" type="anagram" heading="Talk to Queen Sigrid in Etceteria Castle" action="Talk to Queen Sigrid" x="2499" y="3861" width="4" height="4" level="1">
+  <clue id="298" tier="hard" type="anagram" heading="Talk to Queen Sigrid in Etceteria Castle" action="Talk to Queen Sigrid" x="2612" y="3871" width="6" height="9" level="1">
     <text>This anagram reveals who to speak to next: Sequin Dirge</text>
     <anagram>Sequin Dirge</anagram>
     <details>Fastest: Ctrl+T or ;;t &gt; Locations &gt; Miscellania.
@@ -2091,7 +2076,7 @@ Alternatively: Ring of wealth &gt; 1. Miscellania or fairy ring CIP, then walk s
 Final step: Walk east across the bridge to Etceteria castle, throne room floor 1, then talk to Queen Sigrid (Etceteria castle, floor 1). Use the stairs to floor 1 above ground.
 Clue: Talk to Queen Sigrid in Etceteria Castle. An NPC may give you a puzzle box. Open it for the puzzle helper.
 Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
-Tile 2499, 3861 | level 1</details>
+Tile 2612, 3871 | level 1</details>
   </clue>
   <clue id="299" tier="hard" type="anagram" heading="Talk to Zenesha in her house south of Ardougne Market" action="Talk to Zenesha" x="2657" y="3291" width="5" height="3" level="0">
     <text>This anagram reveals who to speak to next: A Zen She</text>
@@ -2276,10 +2261,10 @@ Tile 3434, 3265 | level 0</details>
   </clue>
   <clue id="62" tier="medium" type="map" heading="Draynor Village fishing shore" action="Dig" x="3092" y="3225" width="1" height="1" level="0">
     <text>X marks the spot at the end of a path starting from a rock and near a fishing spot.</text>
-    <details>Fastest: Ctrl+T &gt; Locations &gt; Wizard's Tower.
-Alternatively: Amulet of glory &gt; Draynor Village, run south-east to the willows.
-Third option: Draynor Village lodestone, run south to the willows by the fishing spots.
-Final step: Run north to the willows, over the bridge north of the tower.
+    <details>Fastest: Ctrl+T or ;;t &gt; Skilling &gt; Woodcutting &gt; Willow, then a short walk to the dig spot.
+Alternatively: Ctrl+T &gt; Locations &gt; Wizard's Tower, then run north to the willows.
+Third option: Amulet of glory &gt; Draynor Village, then run south-east to the willows.
+Final step: Walk to the dig between the southernmost willow and the small obelisk.
 Clue: Dig between the southernmost willow and the small obelisk.
 Tile 3092, 3225 | level 0</details>
   </clue>
@@ -2630,13 +2615,11 @@ Tile 2887, 3044 | level 0</details>
   </clue>
   <clue id="418" tier="hard" type="coordinates" heading="Bedabin Camp pond" action="Dig" x="3168" y="3041" width="1" height="1" level="0">
     <text>03 degrees 45 minutes south,22 degrees 45 minutes east</text>
-    <details>Fastest: Bandit Camp lodestone.
-Alternatively: Fairy ring BIQ (Kalphite Lair), run south-west to Bedabin Camp.
-Third option: Fairy ring DIS (Wizards' Tower), run south-east to Bedabin Camp.
-Final step: Run north-west to Bedabin Camp. On the pond's north bank dig in the gap between the two trees.
-Clue: Dig at Bedabin Camp pond. Be ready to fight the wizard when digging.
-Tip: make a portable fairy ring in ;;ig, or buy an unlimited one for 5 Kavros dollars.
-Tile 3168, 3041 | level 0</details>
+    <details>Fastest: Enlightened amulet &gt; Bandit Camp, run north-west to Bedabin Camp.
+Alternatively: Bandit Camp teleport scroll (from clues or the GE), run north-west to Bedabin Camp.
+Third option: Bandit Camp lodestone, run north-west to Bedabin Camp.
+Final step: On the pond's north bank dig in the gap between the two trees.
+Clue: Dig at Bedabin Camp pond. Be ready to fight the wizard when digging.</details>
   </clue>
   <clue id="420" tier="hard" type="coordinates" heading="Gu'Tanoth, ogre city" action="Dig" x="2542" y="3031" width="1" height="1" level="0">
     <text>04 degrees 03 minutes south,03 degrees 11 minutes east</text>
@@ -2660,11 +2643,11 @@ Tile 2581, 3030 | level 0</details>
   </clue>
   <clue id="423" tier="hard" type="coordinates" heading="Karamja Shipyard" action="Dig" x="2961" y="3024" width="1" height="1" level="0">
     <text>04 degrees 16 minutes south,16 degrees 16 minutes east</text>
-    <details>Fastest: Amulet of glory &gt; Karamja.
-Alternatively: Karamja lodestone, then walk south-east to the same building.
-Final step: Walk south down the east coast to the shipyard. Dig outside the east window of G.L.O. Caranock's building.
-Clue: Dig at Karamja Shipyard. Be ready to fight the wizard when digging.
-Tile 2961, 3024 | level 0</details>
+    <details>Fastest: Ctrl+T &gt; Skilling &gt; Woodcutting &gt; Overgrown Idol (Karamja).
+Alternatively: Amulet of glory &gt; Karamja, walk south down the east coast to the shipyard.
+Third option: Karamja lodestone, walk south-east to the same building.
+Final step: Dig outside the east window of G.L.O. Caranock's building.
+Clue: Dig at Karamja Shipyard. Be ready to fight the wizard when digging.</details>
   </clue>
   <clue id="424" tier="hard" type="coordinates" heading="Arandar Pass" action="Dig" x="2339" y="3311" width="1" height="1" level="0">
     <text>04 degrees 41 minutes north,03 degrees 09 minutes west</text>
@@ -2714,10 +2697,10 @@ Tile 2924, 2963 | level 0</details>
   </clue>
   <clue id="433" tier="hard" type="coordinates" heading="Scarecrow near Taverley Dungeon" action="Dig" x="2896" y="3397" width="1" height="1" level="0">
     <text>07 degrees 22 minutes north,14 degrees 15 minutes east</text>
-    <details>Fastest: Taverley lodestone.
-Final step: Go to the wheat field beside the dungeon entrance. Dig immediately south of the scarecrow.
-Clue: Dig at Scarecrow near Taverley Dungeon. Be ready to fight the wizard when digging.
-Tile 2896, 3397 | level 0</details>
+    <details>Fastest: Modern spellbook &gt; Taverley Teleport, run south-east to the wheat field.
+Alternatively: Taverley lodestone, run south-east to the wheat field.
+Final step: Dig immediately south of the scarecrow.
+Clue: Dig at Scarecrow near Taverley Dungeon. Be ready to fight the wizard when digging.</details>
   </clue>
   <clue id="435" tier="hard" type="coordinates" heading="Hemenster, north-east of the Fishing Guild" action="Dig" x="2632" y="3407" width="1" height="1" level="0">
     <text>07 degrees 41 minutes north,06 degrees 00 minutes east</text>
@@ -2795,19 +2778,15 @@ Tile 3113, 3602 | level 0</details>
   </clue>
   <clue id="450" tier="hard" type="coordinates" heading="Trollheim, Mad Eadgar's cave" action="Dig" x="2884" y="3667" width="1" height="1" level="0">
     <text>15 degrees 48 minutes north,13 degrees 52 minutes east</text>
-    <details>Fastest: Amulet of farming &gt; Herb Patches &gt; 4. Trollheim Herb Patch.
-Alternatively: Burthorpe lodestone, run north to Death Plateau and up Trollheim (long climb).
-Final step: Run south-east to Mad Eadgar's cave. Dig immediately south of Mad Eadgar's cave entrance.
-Clue: Dig at Trollheim, Mad Eadgar's cave. Be ready to fight the wizard when digging.
-Tile 2884, 3667 | level 0</details>
+    <details>Fastest: Modern spellbook &gt; Trollheim Teleport.
+Final step: Dig immediately south of Mad Eadgar's cave entrance.
+Clue: Dig at Trollheim, Mad Eadgar's cave. Be ready to fight the wizard when digging.</details>
   </clue>
   <clue id="451" tier="hard" type="coordinates" heading="Troll Stronghold entrance" action="Dig" x="2848" y="3684" width="1" height="1" level="0">
     <text>16 degrees 20 minutes north,12 degrees 45 minutes east</text>
-    <details>Fastest: Amulet of farming &gt; Herb Patches &gt; 4. Trollheim Herb Patch.
-Alternatively: Burthorpe lodestone, run north to Death Plateau and the mountain path (long climb).
-Final step: Run south-east to the Troll Stronghold. Dig on the south side of the entrance.
-Clue: Dig at Troll Stronghold entrance. Be ready to fight the wizard when digging.
-Tile 2848, 3684 | level 0</details>
+    <details>Fastest: Modern spellbook &gt; Trollheim Teleport.
+Final step: Dig on the south side of the entrance.
+Clue: Dig at Troll Stronghold entrance. Be ready to fight the wizard when digging.</details>
   </clue>
   <clue id="452" tier="hard" type="coordinates" heading="Western ruins, level 22 Wilderness" action="Dig" x="2967" y="3689" width="1" height="1" level="0">
     <text>16 degrees 30 minutes north,16 degrees 28 minutes east</text>
@@ -2865,12 +2844,11 @@ Tile 3244, 3792 | level 0</details>
   </clue>
   <clue id="458" tier="hard" type="coordinates" heading="Moss giants west of Red Dragon Isle" action="Dig" x="3140" y="3804" width="1" height="1" level="0">
     <text>20 degrees 05 minutes north,21 degrees 52 minutes east</text>
-    <details>Fastest: Ctrl+T &gt; Slayer &gt; Level 99+ &gt; Abyssal Beasts.
-Alternatively: Ancient spellbook &gt; Carrallangar Teleport (Graveyard of Shadows), run north to the moss giants' pond.
-Third option: Ancient spellbook &gt; Annakarl Teleport (Demonic Ruins), run south-west to the pond.
-Final step: Run north-east to the pond. Dig on the north side of the water.
-Clue: Dig at Moss giants west of Red Dragon Isle. Be ready to fight the wizard when digging.
-Tile 3140, 3804 | level 0</details>
+    <details>Fastest: Amulet of farming &gt; Wilderness herb patch.
+Alternatively: Ctrl+T &gt; Slayer &gt; Level 99+ &gt; Abyssal Beasts, run north-east to the pond.
+Third option: Ancient spellbook &gt; Carrallangar Teleport (Graveyard of Shadows), run north to the moss giants' pond.
+Final step: Dig on the north side of the water.
+Clue: Dig at Moss giants west of Red Dragon Isle. Be ready to fight the wizard when digging.</details>
   </clue>
   <clue id="459" tier="hard" type="coordinates" heading="Wilderness hobgoblin mine" action="Dig" x="3034" y="3805" width="1" height="1" level="0">
     <text>20 degrees 07 minutes north,18 degrees 33 minutes east</text>
@@ -2899,13 +2877,13 @@ Final step: Run south-east to the fenced lesser demons, then dig at the indicate
 Clue: Dig at Lesser demon enclosure, level 41 Wilderness. Be ready to fight the wizard when digging.
 Tile 3013, 3846 | level 0</details>
   </clue>
-  <clue id="463" tier="hard" type="coordinates" heading="Runite rocks north of the Lava Maze" action="Dig" x="3058" y="3884" width="1" height="1" level="0">
+  <clue id="463" tier="hard" type="coordinates" heading="Phasmatite rocks north of the Lava Maze" action="Dig" x="3058" y="3884" width="1" height="1" level="0">
     <text>22 degrees 35 minutes north,19 degrees 18 minutes east</text>
     <details>Fastest: Ctrl+T &gt; Skilling &gt; Agility &gt; 52 - Wilderness Course.
-Alternatively: Ancient spellbook &gt; Ghorrock Teleport (Frozen Waste Plateau), run east to the runite rocks.
-Third option: Ctrl+T &gt; Skilling &gt; Prayer &gt; Wilderness Chaos Altar, run north-east to the runite rocks.
-Final step: Run south-east to the runite rocks. Dig two tiles west of the eastern rock.
-Clue: Dig at Runite rocks north of the Lava Maze. Be ready to fight the wizard when digging.
+Alternatively: Ancient spellbook &gt; Ghorrock Teleport (Frozen Waste Plateau), run east to the phasmatite rocks.
+Third option: Ctrl+T &gt; Skilling &gt; Prayer &gt; Wilderness Chaos Altar, run north-east to the phasmatite rocks.
+Final step: Run south-east to the phasmatite rocks. Dig two tiles west of the eastern rock.
+Clue: Dig at Phasmatite rocks north of the Lava Maze. Be ready to fight the wizard when digging.
 Tile 3058, 3884 | level 0</details>
   </clue>
   <clue id="464" tier="hard" type="coordinates" heading="Greater demon ruins, level 47 Wilderness" action="Dig" x="3290" y="3889" width="1" height="1" level="0">

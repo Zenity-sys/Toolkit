@@ -18,6 +18,14 @@ namespace KavrosClueHelper
             public Point[] Ink, Probes, Empty;
         }
         private readonly List<Pattern> patterns=new List<Pattern>();
+        private int dpi=96;
+        public void UseDpi(int value){dpi=value<96?96:value;}
+        private IEnumerable<Pattern> Ordered()
+        {
+            if(dpi==96)return patterns;
+            float target=dpi/96F;
+            return patterns.OrderBy(p=>Math.Abs(p.Scale-target)).ThenBy(p=>p.Scale);
+        }
         private static bool IsInk(Color p) { return p.R>40 && p.R<164 && p.G>25 && p.G<148 && p.B>15 && p.B<125 && p.R>p.G && p.R-p.G<55 && p.G>p.B && p.G-p.B<55; }
         private static bool IsPaper(Color p) { return p.R>155 && p.G>115 && p.B>65 && p.R-p.G>5 && p.R-p.G<90 && p.G-p.B>12 && p.G-p.B<100; }
         public LegacyMasterClueReader(string assets)
@@ -48,7 +56,7 @@ namespace KavrosClueHelper
         }
         public DetectedPuzzle Detect(Bitmap image,Pixels pixels,Rectangle? previous=null)
         {
-            List<Rectangle> papers=previous.HasValue ? new List<Rectangle>{Rectangle.Intersect(previous.Value,new Rectangle(Point.Empty,image.Size))} : FindPapers(pixels);
+            List<Rectangle> papers=previous.HasValue ? new List<Rectangle>{Rectangle.Intersect(previous.Value,new Rectangle(Point.Empty,image.Size))} : FindPapers(pixels).Where(r=>!ParagraphVision.SkipClueSheet(r,pixels.Width)).ToList();
             foreach(Rectangle paper in papers.OrderByDescending(r=>r.Width*r.Height).Take(8))
             {
                 if(paper.Width<190 || paper.Height<90) continue;
@@ -58,7 +66,7 @@ namespace KavrosClueHelper
                 bool[] near=(bool[])mask.Clone();
                 foreach(Point point in points) for(int dy=-1;dy<=1;dy++) for(int dx=-1;dx<=1;dx++)
                     if(point.X+dx>=0 && point.Y+dy>=0 && point.X+dx<paper.Width && point.Y+dy<paper.Height) near[(point.Y+dy)*paper.Width+point.X+dx]=true;
-                foreach(Pattern pattern in patterns)
+                foreach(Pattern pattern in Ordered())
                 {
                     if(pattern.Size.Width>paper.Width || pattern.Size.Height>paper.Height) continue;
                     Point anchor=pattern.Probes[0];

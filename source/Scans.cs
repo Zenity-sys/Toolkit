@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Linq;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 namespace KavrosClueHelper
 {
@@ -98,15 +99,67 @@ namespace KavrosClueHelper
         public Action<string> Progress;
         private sealed class Model {public ScanRegion Region;public float Scale;public ImagePattern Title,Level;public Size Source;public Point TitleOrigin;public Point[] Empty;}
         private readonly List<Model> models=new List<Model>();
+        private string scanDir;
         private readonly NativeClueOcr ocr=new NativeClueOcr();
         private readonly ScanTitleReader titles;
         private Rectangle lastOcrArea;private ulong lastOcrHash;private DetectedPuzzle lastOcr;private bool ocrCached;
         public string LastText;
         public readonly List<ScanRegion> Regions=new List<ScanRegion>();
+        private int dpi=96;
+        private float targetScale;
+        private bool added175;
+        public bool? LegacyInterface;
+        public void UseTarget(float value){targetScale=value;}
+        public void UseDpi(int value)
+        {
+            if(value<96)value=96;
+            dpi=value;
+            if(dpi==96||added175)return;
+            float target=targetScale>0.01F?targetScale:dpi/96F;
+            float gap=Math.Abs(target-1.75F);
+            if(gap<Math.Abs(target-1.5F)&&gap<Math.Abs(target-2F)){added175=true;AddScale(1.75F);}
+        }
+        private IEnumerable<Model> OrderedModels()
+        {
+            float aim=targetScale>0.01F?targetScale:(dpi==96?0F:dpi/96F);
+            if(aim<=0F)return models;
+            return models.OrderBy(m=>ScaleRank(m.Scale,aim)).ThenBy(m=>Math.Abs(m.Scale-aim)).ThenBy(m=>m.Scale);
+        }
+        private static int ScaleRank(float scale,float aim)
+        {
+            if(Math.Abs(scale-aim)<0.02F)return 0;
+            if(Math.Abs(scale-1F)<0.02F)return 1;
+            return 2;
+        }
+        private void AddScale(float scale)
+        {
+            if(string.IsNullOrEmpty(scanDir))return;
+            foreach(int id in new[]{368,371})
+            {
+                ScanRegion region=null;
+                for(int i=0;i<Regions.Count;i++)if(Regions[i].Id==id){region=Regions[i];break;}
+                if(region==null)continue;
+                try
+                {
+                    int[] meta;
+                    if(!ScanTables.TryInts(File.ReadAllText(Path.Combine(scanDir,id+"-title.tsv")),4,out meta))continue;
+                    using(Bitmap original=new Bitmap(Path.Combine(scanDir,id+"-title.png")))
+                    using(Bitmap image=Pixels.Crop(original,new Rectangle(Point.Empty,original.Size),new Size((int)Math.Round(original.Width*scale),(int)Math.Round(original.Height*scale))))
+                    using(Bitmap oldLevel=new Bitmap(Path.Combine(scanDir,id+"-level.png")))
+                    using(Bitmap level=Pixels.Crop(oldLevel,new Rectangle(Point.Empty,oldLevel.Size),new Size((int)Math.Round(oldLevel.Width*scale),(int)Math.Round(oldLevel.Height*scale))))
+                    {
+                        Pixels mask=new Pixels(image);var empty=new List<Point>();
+                        for(int yy=0;yy<image.Height;yy+=2)for(int xx=0;xx<image.Width;xx+=2)if(mask.Get(xx,yy).A<5)empty.Add(new Point(xx,yy));
+                        models.Add(new Model{Region=region,Scale=scale,Title=new ImagePattern(image),Level=new ImagePattern(level),Source=new Size(meta[2],meta[3]),TitleOrigin=new Point(meta[0],meta[1]),Empty=empty.Where((q,i)=>i%Math.Max(1,empty.Count/24)==0).Take(24).ToArray()});
+                    }
+                }
+                catch(Exception ex){CrashLog.Write(ex);}
+            }
+        }
         public ScanVision(string assets)
         {
             titles=new ScanTitleReader(assets);
-            string dir=Path.Combine(assets,"scan");
+            string dir=Path.Combine(assets,"scan");scanDir=dir;
             foreach(int id in new[]{368,371})
             {
                 try
@@ -116,6 +169,7 @@ namespace KavrosClueHelper
                     if(!ScanTables.TryInts(File.ReadAllText(Path.Combine(dir,id+"-title.tsv")), 4, out meta)) continue;
                     var region=new ScanRegion{Id=id,Name=id==368?"Prifddinas":"Heart of Gielinor",BaseRange=id==368?30:49,Level=1,MapBounds=box,
                         Spots=ScanTables.ReadSpots(File.ReadAllLines(Path.Combine(dir,id+".tsv")))};
+                    region.Aliases=new[]{region.Name};
                     Regions.Add(region);
                     foreach(float scale in new[]{1F,0.8F,1.05F,0.95F,1.25F,1.5F,2F,0.6F})
                     using(Bitmap original=new Bitmap(Path.Combine(dir,id+"-title.png")))
@@ -181,39 +235,78 @@ namespace KavrosClueHelper
             text=Regex.Replace(text,@"\b([0-9il])\s+([0-9il]) paces\b",m=>m.Groups[1].Value+m.Groups[2].Value+" paces");
             text=Regex.Replace(text,@"\b[0-9il]{1,2} paces\b",m=>m.Value.Replace('i','1').Replace('l','1'));
             if(!text.Contains("scan")||!text.Contains("range")||!text.Contains("orb")||!text.Contains("paces"))return null;
-            var matches=Regions.Where(r=>r.Tier=="elite"&&r.Id!=358&&(Regex.IsMatch(text,@"\b"+r.BaseRange+@" paces\b")||Regex.IsMatch(text,@"\b"+(r.BaseRange+5)+@" paces\b"))&&(r.Aliases.Any(a=>ContainsRegion(text,a))||r.Id==367&&ContainsRegion(text,"wilderness volcano")||r.Id==349&&ContainsRegion(text,"east of the elid and north of nardah"))).ToArray();
+            var matches=Regions.Where(r=>Readable(r)&&RangeText(r,text)&&Named(r,text)).ToArray();
             return matches.Length==1?matches[0]:null;
         }
-        private ScanRegion MatchScrollTranscript(string raw)
+        internal ScanRegion MatchScrollTranscript(string raw)
         {
             ScanRegion exact=MatchEliteText(raw);if(exact!=null)return exact;
             string text=ReferenceClueReader.Normalize(raw);
             Match range=Regex.Match(text,@"\b([0-9il]{1,2})\s+pace[a-z]?\b");
             if(!range.Success)return MatchRegionOnly(text);
             int value;if(!Int32.TryParse(range.Groups[1].Value.Replace('i','1').Replace('l','1'),out value))return null;
-            var matches=Regions.Where(r=>r.Tier=="elite"&&r.Id!=358&&(r.BaseRange==value||r.BaseRange+5==value)&&(r.Aliases.Any(a=>ContainsRegion(text,a))||r.Id==367&&ContainsRegion(text,"wilderness volcano")||r.Id==349&&ContainsRegion(text,"east of the elid and north of nardah"))).ToArray();
+            var matches=Regions.Where(r=>Readable(r)&&(r.BaseRange==value||r.BaseRange+5==value)&&Named(r,text)).ToArray();
             if(matches.Length==0)return MatchRegionOnly(text);
             return matches.Length==1?matches[0]:null;
+        }
+        private static bool Readable(ScanRegion r)
+        {
+            return r!=null&&r.Id!=358&&(r.Tier=="elite"||r.Tier=="master");
+        }
+        private static bool RangeText(ScanRegion r,string text)
+        {
+            return Regex.IsMatch(text,@"\b"+r.BaseRange+@" paces\b")||Regex.IsMatch(text,@"\b"+(r.BaseRange+5)+@" paces\b");
+        }
+        private static bool Named(ScanRegion r,string text)
+        {
+            if(r.Aliases!=null)foreach(string alias in r.Aliases)if(ContainsRegion(text,alias))return true;
+            if(r.Id==367&&ContainsRegion(text,"wilderness volcano"))return true;
+            if(r.Id==349&&ContainsRegion(text,"east of the elid and north of nardah"))return true;
+            return false;
         }
         private static readonly string[] ScanStates={"orb glows","try scanning","right coordinate","in range of the coordinate","paces away"};
         private ScanRegion MatchRegionOnly(string text)
         {
-            if(text.Contains("nothing scans")||text.Contains("range of this orb")||!ScanStates.Any(s=>text.Contains(s)))return null;
+            // A named scroll that says you are too far away, or quotes the orb
+            // range, is still that scan. A place name on its own is not.
+            bool tooFar=text.Contains("nothing scans")||text.Contains("range of this orb")||text.Contains("too far");
+            if(!tooFar&&!ScanStates.Any(s=>text.Contains(s)))return null;
             int best=0;ScanRegion winner=null;bool tie=false;
-            foreach(ScanRegion r in Regions.Where(r=>r.Tier=="elite"&&r.Id!=358))
+            foreach(ScanRegion r in Regions.Where(Readable))
             {
-                var names=r.Aliases.Concat(r.Id==367?new[]{"wilderness volcano"}:new string[0]).Concat(r.Id==349?new[]{"east of the elid and north of nardah"}:new string[0]);
+                var names=(r.Aliases??new string[0]).Concat(r.Id==367?new[]{"wilderness volcano"}:new string[0]).Concat(r.Id==349?new[]{"east of the elid and north of nardah"}:new string[0]);
                 int length=names.Where(a=>ContainsRegion(text,a)).Select(a=>ReferenceClueReader.Normalize(a).Length).DefaultIfEmpty(0).Max();
                 if(length>best){best=length;winner=r;tie=false;}else if(length>0&&length==best)tie=true;
             }
             return tie?null:winner;
         }
-        public DetectedPuzzle Find(Bitmap image,Pixels p)
+        public DetectedPuzzle Find(Bitmap image,Pixels p){return Find(image,p,null,true);}
+        public DetectedPuzzle Find(Bitmap image,Pixels p,Rectangle? clip){return Find(image,p,clip,true);}
+        // finishElite is false when the caller still wants the compass read
+        // before OCR. The default path never gives up on a box before OCR.
+        internal DetectedPuzzle Find(Bitmap image,Pixels p,Rectangle? clip,bool finishElite)
         {
+            if(image==null||p==null)return null;
+            if(clip.HasValue)
+            {
+                DetectedPuzzle named=ReadTitleBox(p,clip.Value);
+                if(named!=null)return named;
+            }
             // Search each title once. Overlapping scenery regions otherwise
             // repeat the same white-pixel candidates hundreds of times.
-            List<Rectangle> areas=new List<Rectangle>{new Rectangle(Point.Empty,image.Size)};
-            foreach(Model model in models)
+            // A parchment box is searched on its own before the full window.
+            List<Rectangle> areas=new List<Rectangle>();
+            if(clip.HasValue)
+            {
+                Rectangle box=Rectangle.Intersect(clip.Value,new Rectangle(Point.Empty,image.Size));
+                if(box.Width>=80&&box.Height>=80)areas.Add(box);
+            }
+            if(areas.Count==0)areas.Add(new Rectangle(Point.Empty,image.Size));
+            // A parchment box is small, so scale 1.0 is tried before the Auto guess.
+            IEnumerable<Model> ordered=clip.HasValue?models.OrderBy(m=>ScaleRank(m.Scale,1F)).ThenBy(m=>Math.Abs(m.Scale-1F)).ThenBy(m=>m.Scale):OrderedModels();
+            foreach(Model model in ordered)
+            {
+            if(clip.HasValue&&Math.Abs(model.Scale-1F)>0.02F)continue;
             foreach(Rectangle area in areas)
             foreach(Point hit in model.Title.Find(p,area,8,35,q=>PaperAround(p,q,model)))
             {
@@ -234,11 +327,20 @@ namespace KavrosClueHelper
                 var reading=new ScanReading{Region=model.Region,DifferentLevel=model.Level.Find(p,body,1,35).Count>0,Outside=titles.Outside(p,body)};
                 return new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=reading,Bounds=body,Scale=s,Confidence=0.95,Message="Scan clue"};
             }
+            }
+            if(clip.HasValue)return finishElite?ReadEliteBox(image,p,clip.Value):null;
             return ReadElite(image,p);
+        }
+        internal DetectedPuzzle ReadTitleBox(Pixels p,Rectangle box)
+        {
+            if(p==null||box.Width<40||box.Height<40)return null;
+            ScanReading found=titles.Read(p,box,Regions);
+            if(found==null)return null;
+            return new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=found,Bounds=box,Scale=1,Confidence=.97,Message="Scan clue"};
         }
         internal DetectedPuzzle FindNativeTitle(Pixels p)
         {
-            foreach(Rectangle area in ScrollAreas.Find(p,true)){
+            foreach(Rectangle area in ScrollAreas.Find(p,true,LegacyInterface)){
                 ScanReading found=titles.Read(p,area,Regions);
                 if(found!=null)return new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=found,Bounds=area,Scale=1,Confidence=.97};
             }
@@ -246,24 +348,41 @@ namespace KavrosClueHelper
         }
         private DetectedPuzzle ReadElite(Bitmap image,Pixels p)
         {
-            if(!Regions.Any(r=>r.Tier=="elite"))return null;
-            foreach(Rectangle area in ScrollAreas.Find(p,true).Take(3))
+            if(!Regions.Any(Readable))return null;
+            foreach(Rectangle area in ScrollAreas.Find(p,true,LegacyInterface).Take(3))
             {
+                DetectedPuzzle found=ReadEliteBox(image,p,area);
+                if(found!=null)return found;
+            }
+            return null;
+        }
+        internal DetectedPuzzle ReadEliteBox(Bitmap image,Pixels p,Rectangle area)
+        {
+            if(image==null||p==null||!Regions.Any(Readable))return null;
+            area=Rectangle.Intersect(area,new Rectangle(Point.Empty,image.Size));
+            if(area.Width<40||area.Height<40)return null;
+            try
+            {
+                // One budget for every recognition attempt. A failure, including
+                // a timeout, is no result. The UI tick does not cancel this call.
+                Stopwatch clock=Stopwatch.StartNew();
                 ulong hash=p.Hash(area);if(ocrCached&&hash==lastOcrHash&&area==lastOcrArea&&lastOcr!=null)return lastOcr;
                 ScanReading title=titles.Read(p,area,Regions);
                 if(title!=null)return new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=title,Bounds=area,Scale=1,Confidence=.97};
                 int bright=0;for(int y=area.Top;y<area.Bottom;y+=2)for(int x=area.Left;x<area.Right;x+=2){Color c=p.Get(x,y);if(c.R>190&&c.G>190&&c.B>190&&Math.Abs(c.R-c.B)<35)bright++;}
-                if(bright<30)continue;
+                if(bright<30)return null;
                 if(Progress!=null)Progress("Reading scan clue...");
                 double scale=Math.Min(1,1600.0/Math.Max(area.Width,area.Height));
                 using(Bitmap crop=Pixels.Crop(image,area,new Size((int)(area.Width*scale),(int)(area.Height*scale))))
                 {
-                    LastText=ocr.Read(crop);string originalText=LastText;ScanRegion originalMatch=MatchScrollTranscript(LastText);
+                    int left=OcrBudget(clock); if(left<50)return null;
+                    LastText=ocr.Read(crop,left);string originalText=LastText;ScanRegion originalMatch=MatchScrollTranscript(LastText);
                     if(originalMatch!=null)
                     {lastOcrHash=hash;lastOcrArea=area;ocrCached=true;lastOcr=new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=ScanReading.FromText(originalMatch,LastText),Bounds=area,Scale=1,Confidence=0.96};return lastOcr;}
                     using(Bitmap large=Pixels.Crop(crop,new Rectangle(Point.Empty,crop.Size),new Size(crop.Width*2,crop.Height*2)))
                     {
-                        LastText=ocr.Read(large);ScanRegion scaledMatch=MatchScrollTranscript(LastText);
+                        left=OcrBudget(clock); if(left<50)return null;
+                        LastText=ocr.Read(large,left);ScanRegion scaledMatch=MatchScrollTranscript(LastText);
                         if(scaledMatch!=null){lastOcrHash=hash;lastOcrArea=area;ocrCached=true;lastOcr=new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=ScanReading.FromText(scaledMatch,LastText),Bounds=area,Scale=1,Confidence=0.96};return lastOcr;}
                         originalText+=" UPSCALED: "+LastText;
                     }
@@ -271,12 +390,23 @@ namespace KavrosClueHelper
                     // before OCR so the parchment texture cannot become letters.
                     var cp=new Pixels(crop);using(Graphics g=Graphics.FromImage(crop))g.Clear(Color.White);
                     for(int y=0;y<crop.Height;y++)for(int x=0;x<crop.Width;x++){Color c=cp.Get(x,y);if(c.R>185&&c.G>185&&c.B>185&&Math.Max(c.R,Math.Max(c.G,c.B))-Math.Min(c.R,Math.Min(c.G,c.B))<45)crop.SetPixel(x,y,Color.Black);}
-                    LastText=ocr.Read(crop);string maskedText=LastText;ScanRegion region=MatchScrollTranscript(LastText);
+                    left=OcrBudget(clock); if(left<50)return null;
+                    LastText=ocr.Read(crop,left);string maskedText=LastText;ScanRegion region=MatchScrollTranscript(LastText);
                     if(region==null)LastText="ORIGINAL: "+originalText+" MASK: "+maskedText;lastOcrHash=hash;ocrCached=true;lastOcr=region==null?null:new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=ScanReading.FromText(region,originalText+" "+maskedText),Bounds=area,Scale=1,Confidence=0.96};
                     if(lastOcr!=null)return lastOcr;
                 }
             }
+            catch(Exception ex)
+            {
+                CrashLog.Write(ex);
+                return null;
+            }
             return null;
+        }
+        private static int OcrBudget(Stopwatch clock)
+        {
+            int left=2500-(int)clock.ElapsedMilliseconds;
+            return left<1?1:left;
         }
         private static bool PaperAround(Pixels p,Point q,Model model)
         {
@@ -304,6 +434,8 @@ namespace KavrosClueHelper
         public const string ManualHint="Right-click your spot on the map.";
         public string TrackingStatus=ManualHint;
         private MinimapMatch pending;
+        private MinimapMatch farFix;
+        private DateTime farAt;
         private DateTime lastMatch;
         private DateTime lastConfirmed;
         private int confirmations;
@@ -316,6 +448,19 @@ namespace KavrosClueHelper
         public const int LostFrames=8;
         public const string FindingHint="Finding your position on the minimap...";
         public const string LostHint="Grey marker shows your last position. Finding you again automatically.";
+        public const string OutsideNote="Too far away for this scan.";
+        // The too-far line is a note on top of the normal status. It does not replace tracking.
+        public string Noted(string status)
+        {
+            if(!Outside||string.IsNullOrEmpty(status))return status??"";
+            if(status.IndexOf(OutsideNote,StringComparison.Ordinal)>=0)return status;
+            return OutsideNote+" "+status;
+        }
+        public string FloorLine()
+        {
+            string status=AutoTracking?Noted(TrackingStatus):Position.HasValue?"Manual position set. Right-click the map to move it.":"Right-click your position on the map.";
+            return (DifferentLevel?"Different level. Check the marked floor. ":"")+"Map level "+(Region==null?0:Region.Level)+". "+status;
+        }
         public readonly HashSet<int> Visited=new HashSet<int>();
         public void NoteCoverage()
         {
@@ -328,31 +473,25 @@ namespace KavrosClueHelper
             bool changed=Region==null||reading.Region==null||Region.Id!=reading.Region.Id;
             if(changed)
             {
-                Position=null;LastKnown=null;PositionTracked=false;pending=null;confirmations=0;misses=0;motion.Reset();trackHold.Reset();                MeerkatLocked=false;
+                Position=null;LastKnown=null;PositionTracked=false;pending=null;farFix=null;confirmations=0;misses=0;motion.Reset();trackHold.Reset();                MeerkatLocked=false;
                 Visited.Clear();
                 Meerkat=reading.Meerkat;
-                TrackingStatus=reading.Outside?"Too far away for this scan.":AutoTracking?FindingHint:ManualHint;
+                TrackingStatus=AutoTracking?FindingHint:ManualHint;
             }
             else if(!MeerkatLocked&&reading.Meerkat)Meerkat=true;
             Region=reading.Region;DifferentLevel=reading.DifferentLevel;Outside=reading.Outside;
-            if(Outside){Position=null;PositionTracked=false;pending=null;TrackingStatus="Too far away for this scan.";}
         }
         public bool InRange(PointF spot,int factor=1){return (!AutoTracking||PositionTracked)&&!DifferentLevel&&Position.HasValue&&Math.Max(Math.Abs(spot.X-Position.Value.X),Math.Abs(spot.Y-Position.Value.Y))<=Range*factor;}
-        public void Clear(){Region=null;Position=null;LastKnown=null;DifferentLevel=false;Outside=false;PositionTracked=false;pending=null;motion.Reset();trackHold.Reset();Visited.Clear();}
-        public void SetAutomatic(bool enabled){AutoTracking=enabled;Position=null;LastKnown=null;PositionTracked=false;pending=null;misses=0;motion.Reset();trackHold.Reset();TrackingStatus=enabled?FindingHint:"Right-click your spot on the map.";}
+        public void Clear(){Region=null;Position=null;LastKnown=null;DifferentLevel=false;Outside=false;PositionTracked=false;pending=null;farFix=null;motion.Reset();trackHold.Reset();Visited.Clear();}
+        public void SetAutomatic(bool enabled){AutoTracking=enabled;Position=null;LastKnown=null;PositionTracked=false;pending=null;farFix=null;misses=0;motion.Reset();trackHold.Reset();TrackingStatus=enabled?FindingHint:"Right-click your spot on the map.";}
         public void SetManual(PointF position){SetAutomatic(false);Position=position;TrackingStatus="Manual position set. Right-click the map to move it.";}
         public void PrepareRecheck(){if(LastKnown.HasValue)return;Position=null;PositionTracked=false;pending=null;TrackingStatus="Minimap found. Checking your current position...";}
         public void ApplyMatch(MinimapMatch match,DateTime now)
         {
             if(!AutoTracking)return;
-            if(Outside)
-            {
-                confirmations=0;PositionTracked=false;Position=null;pending=null;
-                TrackingStatus="Too far away for this scan.";
-                return;
-            }
             if(match==null)
             {
+                farFix=null;
                 if(PositionTracked&&LastKnown.HasValue)
                 {
                     // Keep following through missed frames, moving the marker
@@ -382,7 +521,24 @@ namespace KavrosClueHelper
                 double gap=Math.Max(0.05,(now-lastMatch).TotalSeconds);
                 double allowed=14+gap*24;
                 if(CompassMath.Distance(match.Position,LastKnown.Value)>allowed)
-                {Position=LastKnown;TrackingStatus="Following your minimap automatically.";NoteCoverage();return;}
+                {
+                    // One far reading is kept. The same far spot on the next
+                    // frame is a teleport, so the marker locks there.
+                    bool again=farFix!=null&&(now-farAt).TotalSeconds<2&&CompassMath.Distance(match.Position,farFix.Position)<=18;
+                    if(!again)
+                    {
+                        farFix=match;farAt=now;
+                        Position=LastKnown;TrackingStatus="Following your minimap automatically.";
+                        return;
+                    }
+                    farFix=null;pending=match;lastMatch=now;misses=0;confirmations=2;
+                    Position=match.Position;LastKnown=match.Position;PositionTracked=true;lastConfirmed=now;
+                    motion.Reset();motion.Observe(match.Position,now);
+                    TrackingStatus="Following your minimap automatically.";
+                    NoteCoverage();
+                    return;
+                }
+                farFix=null;
                 PointF held=LastKnown.Value;
                 var smoothed=new PointF(held.X+(match.Position.X-held.X)*0.7F,held.Y+(match.Position.Y-held.Y)*0.7F);
                 pending=match;lastMatch=now;misses=0;Position=smoothed;LastKnown=smoothed;PositionTracked=true;lastConfirmed=now;
@@ -396,7 +552,7 @@ namespace KavrosClueHelper
             {
                 // Back where we lost the player (or a short run from there):
                 // pick up again at once, without a confirmation frame.
-                pending=match;lastMatch=now;confirmations=2;Position=match.Position;LastKnown=match.Position;PositionTracked=true;lastConfirmed=now;
+                farFix=null;pending=match;lastMatch=now;confirmations=2;Position=match.Position;LastKnown=match.Position;PositionTracked=true;lastConfirmed=now;
                 motion.Reset();motion.Observe(match.Position,now);
                 TrackingStatus="Following your minimap automatically.";
                 NoteCoverage();
@@ -413,7 +569,7 @@ namespace KavrosClueHelper
         public void Expire(DateTime now)
         {if(AutoTracking&&Position.HasValue&&(now-lastMatch).TotalSeconds>12){Position=null;PositionTracked=false;pending=null;TrackingStatus=LastKnown.HasValue?LostHint:FindingHint;}}
 
-        public string Summary {get{return Region==null?"":Region.Name+" | "+Range+" paces"+(Meerkat?" (meerkat)":"")+" | Dig locations: level "+Region.Level+"\n"+(AutoTracking?TrackingStatus:Position.HasValue?"Manual position set. Right-click the map to move it.":ManualHint)+(AutoTracking&&!PositionTracked&&LastKnown.HasValue?"\nGrey marker: last confirmed "+Math.Max(0,(int)(DateTime.UtcNow-lastConfirmed).TotalSeconds)+"s ago.":"");}}
+        public string Summary {get{return Region==null?"":Region.Name+" | "+Range+" paces"+(Meerkat?" (meerkat)":"")+" | Dig locations: level "+Region.Level+"\n"+FloorLine()+(AutoTracking&&!PositionTracked&&LastKnown.HasValue?"\nGrey marker: last confirmed "+Math.Max(0,(int)(DateTime.UtcNow-lastConfirmed).TotalSeconds)+"s ago.":"");}}
 
     }
     public sealed class ScanMap : Control

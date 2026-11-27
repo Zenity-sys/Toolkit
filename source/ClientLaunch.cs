@@ -83,6 +83,15 @@ namespace KavrosClueHelper
             return only == null ? ClientBinding.Empty : only;
         }
 
+        // Companion passes --show-panel to open the clue panel without a remote click.
+        public static bool ShowPanelRequested(string[] args)
+        {
+            if (args == null) return false;
+            foreach (string arg in args)
+                if (string.Equals(arg, "--show-panel", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
         public static ClientBinding Capture(string[] args, IntPtr foreground)
         {
             try
@@ -216,6 +225,15 @@ namespace KavrosClueHelper
             foreach (LaunchOverlay overlay in overlays)
                 if (overlay != null && overlay.Handle == handle) return overlay;
             return null;
+        }
+
+        // Companion passes --no-tray when it provides the menu, so the helper adds no tray icon.
+        public static bool NoTrayRequested(string[] args)
+        {
+            if (args == null) return false;
+            foreach (string arg in args)
+                if (string.Equals(arg, "--no-tray", StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
         }
 
         private static bool TryArg(string[] args, string name, out string value)

@@ -1,4 +1,7 @@
 $ErrorActionPreference = 'Stop'
+# A full step is major.minor (0.8, 0.9, 1.0). A small update adds a patch
+# (0.8.1, 0.8.2, 0.8.3, 0.8.4). The tag matches app.manifest ToString(3)
+# (v0.8.0, v0.8.1). The app shows v0.8 when the patch is 0, and v0.8.1 when it is not.
 # Velopack CLI. Keep this version aligned with the Velopack package in build.ps1.
 $vpkVersion = '1.2.161'
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
@@ -29,11 +32,14 @@ foreach ($doc in @('README.txt', 'LICENSE.txt', 'THIRD_PARTY.txt', 'PATCH-NOTES.
     Copy-Item -LiteralPath (Join-Path $root $doc) -Destination (Join-Path $stage $doc)
 }
 # Velopack and the GitHub release use this version's CHANGELOG section, not the whole history.
+# The heading may be the pack version (0.8.1 or 0.8.0) or the shown version (0.8.1 or 0.8).
+$display = $version
+if ($version -match '^(\d+)\.(\d+)\.0$') { $display = "$($Matches[1]).$($Matches[2])" }
 $changelog = [IO.File]::ReadAllText((Join-Path $root 'CHANGELOG.md'))
-$match = [regex]::Match($changelog, "(?ms)^## $([regex]::Escape($version))\r?\n(.*?)(?=^## |\z)")
+$match = [regex]::Match($changelog, "(?ms)^## (?:$([regex]::Escape($version))|$([regex]::Escape($display)))\r?\n(.*?)(?=^## |\z)")
 if (-not $match.Success) { throw "CHANGELOG.md has no section for $version." }
 $notesPath = Join-Path $root 'release-notes.md'
-[IO.File]::WriteAllText($notesPath, ("## {0}`r`n{1}`r`n" -f $version, $match.Groups[1].Value.Trim()))
+[IO.File]::WriteAllText($notesPath, ("## v{0}`r`n{1}`r`n" -f $display, $match.Groups[1].Value.Trim()))
 
 $out = Join-Path $root 'release-out'
 if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }

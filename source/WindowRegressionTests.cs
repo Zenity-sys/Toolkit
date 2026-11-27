@@ -11,6 +11,10 @@ namespace KavrosClueHelper
         private static void Check(bool condition, string message) { assertions++; if (!condition) throw new Exception("FAILED: " + message); }
         private static bool BorderedScan(Color border)
         {
+            return BorderedScan(border, null);
+        }
+        private static bool BorderedScan(Color border, bool? legacy)
+        {
             using (Bitmap image = new Bitmap(320, 360))
             {
                 using (Graphics g = Graphics.FromImage(image))
@@ -21,7 +25,7 @@ namespace KavrosClueHelper
                     g.FillRectangle(frame, 30, 20, 180, 240);
                     g.FillRectangle(paper, 50, 40, 140, 200);
                 }
-                return ScrollAreas.Find(new Pixels(image), true).Count > 0;
+                return ScrollAreas.Find(new Pixels(image), true, legacy).Count > 0;
             }
         }
         private static GameWindow Window(int handle, string title, string process, string className)
@@ -110,8 +114,15 @@ namespace KavrosClueHelper
                 Check(WindowLocator.Choose(new[] { clientA, clientB }, IntPtr.Zero, 0, clientA.Handle, taken) == clientB, "the first client is not the one AFK Warden is using");
                 ClientBinding byHwnd = ClientLaunch.Resolve(new[] { "--hwnd", "32" }, clientA.Handle, clients, new uint[0], overlays);
                 Check(byHwnd.Handle == clientC.Handle && byHwnd.ProcessId == 300, "a hwnd argument selects that client");
+                Check(ClientLaunch.ShowPanelRequested(new[] { "--hwnd", "32", "--show-panel" }) && ClientLaunch.ShowPanelRequested(new[] { "--SHOW-PANEL" }), "the show-panel switch is recognised anywhere in the arguments");
+                Check(!ClientLaunch.ShowPanelRequested(new string[0]) && !ClientLaunch.ShowPanelRequested(null) && !ClientLaunch.ShowPanelRequested(new[] { "--hwnd", "32", "--pid=200", "--show-panels" }), "without the switch the helper starts as it always did");
+                Check(ClientLaunch.Resolve(new[] { "--show-panel", "--hwnd", "32" }, clientA.Handle, clients, new uint[0], overlays).Handle == clientC.Handle, "the show-panel switch does not change which client is bound");
+                Check(Native.ShowPanelMessage != Native.NoticeMessage, "a second launch with the switch posts its own message, not the already-running notice");
                 ClientBinding byHex = ClientLaunch.Resolve(new[] { "--hwnd", "0x1F" }, clientA.Handle, clients, new uint[0], overlays);
                 Check(byHex.Handle == clientB.Handle, "a hex hwnd argument selects that client");
+                Check(ClientLaunch.NoTrayRequested(new[] { "--hwnd", "32", "--no-tray" }) && ClientLaunch.NoTrayRequested(new[] { "--NO-TRAY" }), "the no-tray switch is recognised anywhere in the arguments");
+                Check(!ClientLaunch.NoTrayRequested(new string[0]) && !ClientLaunch.NoTrayRequested(null) && !ClientLaunch.NoTrayRequested(new[] { "--hwnd", "32", "--pid=200", "--no-trays", "--notray" }), "without the switch the helper keeps its tray icon");
+                Check(ClientLaunch.Resolve(new[] { "--no-tray", "--hwnd", "32" }, clientA.Handle, clients, new uint[0], overlays).Handle == clientC.Handle, "the no-tray switch does not change which client is bound");
                 ClientBinding byPid = ClientLaunch.Resolve(new[] { "--pid=200" }, clientA.Handle, clients, new uint[0], overlays);
                 Check(byPid.Handle == clientB.Handle && byPid.ProcessId == 200, "a pid argument selects that client's process");
                 ClientBinding byOverlay = ClientLaunch.Resolve(new[] { "--hwnd", "40" }, IntPtr.Zero, clients, new uint[0], overlays);
@@ -149,6 +160,12 @@ namespace KavrosClueHelper
                 clientB.Client = new Rectangle(0, 0, 800, 600);
                 List<Rectangle> covers = WindowLocator.CoverRects(new[] { clientB, shell, chip }, new Rectangle(0, 0, 800, 600), 1);
                 Check(covers.Count == 1 && covers[0].Width == 90, "a small helper overlay is masked and the game window is not");
+                GameWindow behind = Window(25, "Companion", "KavrosCompanion", "WindowsForms10.Window");
+                behind.Client = new Rectangle(100, 80, 140, 90);
+                GameWindow ahead = Window(26, "Slayer Helper", "KavrosSlayerHelper", "WindowsForms10.Window");
+                ahead.Client = new Rectangle(300, 40, 80, 40);
+                List<Rectangle> frontOnly = WindowLocator.CoverRects(new[] { behind, ahead, clientB }, new Rectangle(0, 0, 800, 600), 1, delegate(GameWindow window, Rectangle overlap) { return window.Handle == ahead.Handle; });
+                Check(frontOnly.Count == 1 && frontOnly[0].X == 300 && frontOnly[0].Width == 80, "a helper window behind the game is not blanked");
                 clientB.Display = "Zezima";
                 Check(WindowLocator.Choose(new[] { clientA, clientB, clientC }, clientB.Handle, 200, clientC.Handle) == clientB, "a character name does not change the bound client");
                 Check(clientB.ToString() == "Zezima" && clientA.ToString() == clientA.Title, "the picker shows a character name and otherwise the window title");
@@ -198,6 +215,8 @@ namespace KavrosClueHelper
                     try { if (File.Exists(pickerFile)) File.Delete(pickerFile); } catch (Exception) { }
                 }
                 Check(BorderedScan(Color.FromArgb(28, 48, 86)) && BorderedScan(Color.FromArgb(96, 68, 38)) && !BorderedScan(Color.FromArgb(180, 30, 30)), "a scan accepts a modern blue border and a legacy brown border");
+                Check(BorderedScan(Color.FromArgb(28, 48, 86), false) && !BorderedScan(Color.FromArgb(96, 68, 38), false), "modern mode keeps the blue scan border only");
+                Check(BorderedScan(Color.FromArgb(96, 68, 38), true) && !BorderedScan(Color.FromArgb(28, 48, 86), true), "legacy mode keeps the brown scan border only");
                 File.AppendAllText(report, "\r\nV0.2.1 WINDOW REGRESSIONS PASS: " + assertions + " assertions.\r\nCovers late launch, restart, launcher exclusion, renamed client, multiple windows and stable selection.\r\n");
                 return 0;
             }

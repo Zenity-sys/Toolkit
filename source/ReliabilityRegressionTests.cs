@@ -42,6 +42,7 @@ namespace KavrosClueHelper
                     using(Bitmap incomplete=(Bitmap)original.Clone())
                     {using(Graphics g=Graphics.FromImage(incomplete))using(Brush paper=new SolidBrush(Color.FromArgb(220,190,140)))g.FillRectangle(paper,335,526,310,18);using(AnalysisResult result=engine.Analyze(incomplete,91,false,CancellationToken.None))Check(result.Plan==null,"missing equipment line does not confirm an Edgeville clue");}
                 }
+                engine.UseLegacy(true);
                 using(var image=new Bitmap(Path.Combine(assets,"test_assets","reported","slider-native.png")))
                 using(AnalysisResult result=engine.Analyze(image,100,false,CancellationToken.None))
                 {
@@ -62,7 +63,7 @@ namespace KavrosClueHelper
                         {Check(advanced.Plan!=null&&advanced.Plan.Sliding.SequenceEqual(route.Skip(3)),"several clicks advance the existing route");Check(engine.SlidingRouteReuses>0,"route is reused without resolving every frame");}
                     }
                     using(var panel=new FloatingCluePanel(assets,new CompassSession(assets),new OverlayPreferences(Path.Combine(directory,"unused-reliability-prefs.txt"))))
-                    {panel.SetPuzzle(puzzle,"Click 1 then 2 then 3 in order.");Handles(panel);Check(panel.Height==330,"finished-picture guide fits the slider card");using(var preview=new Bitmap(panel.Width,panel.Height)){panel.DrawToBitmap(preview,new Rectangle(Point.Empty,panel.Size));preview.Save(Path.Combine(directory,"slider-panel-preview.png"));Check(preview.GetPixel(3,90).ToArgb()==Color.FromArgb(18,23,32).ToArgb(),"slider guide background stays opaque");}}
+                    {panel.SetPuzzle(puzzle,"Click 1 then 2 then 3 in order.");Handles(panel);Check(panel.Height==330+WhatsNewLayout.PanelExtra,"finished-picture guide fits the slider card");using(var preview=new Bitmap(panel.Width,panel.Height)){panel.DrawToBitmap(preview,new Rectangle(Point.Empty,panel.Size));preview.Save(Path.Combine(directory,"slider-panel-preview.png"));Check(preview.GetPixel(3,90).ToArgb()==Color.FromArgb(18,23,32).ToArgb(),"slider guide background stays opaque");}}
                 }
                 var knotTracker=new KnotFrameTracker();DateTime knotTime=DateTime.UtcNow;KnotPuzzle source=TestFixtures.KnotExample();
                 Func<int,DetectedPuzzle> rotated=offset=>new DetectedPuzzle{Kind=PuzzleKind.Knot,Knot=new KnotPuzzle{Colours=source.Colours,Locks=source.Locks,Buttons=source.Buttons,Lanes=source.Lanes.Select((lane,i)=>lane.Select((r,j)=>lane[(j+offset+i)%lane.Length]).ToArray()).ToArray()}};
@@ -73,8 +74,11 @@ namespace KavrosClueHelper
                 DetectedPuzzle flicker=rotated(0);flicker.Knot.Lanes[0][0]=new RuneValue(flicker.Knot.Lanes[0][0].Id,!flicker.Knot.Lanes[0][0].IsNot);flicker.Knot.Reliable=true;
                 Check(!sureTracker.Observe(flicker,knotTime.AddMilliseconds(40),true),"a match-marker flicker does not hide the counts");
                 DetectedPuzzle turned=rotated(1);turned.Knot.Reliable=true;
-                Check(sureTracker.Observe(turned,knotTime.AddMilliseconds(80),true),"a confident turn still waits until the ring stops");
-                Check(!sureTracker.Observe(turned,knotTime.AddMilliseconds(120),true),"the same stopped ring then shows its counts");
+                Check(!sureTracker.Observe(turned,knotTime.AddMilliseconds(80),true),"a reliable turn updates the count on the first frame");
+                Check(!sureTracker.Observe(turned,knotTime.AddMilliseconds(120),true),"the stopped ring keeps that count");
+                DetectedPuzzle blur=rotated(2);
+                Check(sureTracker.Observe(blur,knotTime.AddMilliseconds(160),true),"an unreliable mid-spin frame waits");
+                Check(!sureTracker.Observe(blur,knotTime.AddMilliseconds(200),true),"the same mid-spin frame shows counts once it repeats");
                 foreach(int offset in new[]{3,7,2,6})Check(knotTracker.Observe(rotated(offset),knotTime.AddMilliseconds(140+offset),true),"rapid multi-rotation knot updates defer stale guidance");
                 knotTracker.Missing(knotTime.AddMilliseconds(300));Check(knotTracker.History!=null,"brief animation miss retains settled rune memory");
                 Check(knotTracker.Observe(rotated(5),knotTime.AddMilliseconds(400),true),"recovered knot requires fresh confirmation");

@@ -271,7 +271,7 @@ The user has now authorised implementation after catalogue compilation: Easy, th
 | CT:205 | Cryptic / riddle | This crate is mine, all mine, even if it is in the middle of the desert. | Search Crate | x=3289..3289, y=3022..3022, plane=0 |  |
 | CT:208 | Cryptic / riddle | This cupboard has treasure, pirate pots and corsair cutlery! | Search Cupboard | x=2811..2811, y=3160..3160, plane=0 |  |
 | CT:214 | Cryptic / riddle | This temple is rather sluggish. The chest just inside the entrance, however, is filled with goodies. | Search Chest | x=2698..2698, y=9684..9684, plane=0 |  |
-| CT:188 | Cryptic / riddle | Try not to step on any aquatic nasties while searching this crate. | Search Crate | x=2764..2764, y=3273..3273, plane=0 |  |
+| CT:188 | Cryptic / riddle | Try not to step on any aquatic nasties while searching this crate. | Removed. Not on Kavros. Add it back if players get the Fishing Platform crate. |  |  |
 | CT:222 | Cryptic / riddle | While a sea view is nice, it seems this church has not seen visitors in a while. Dig outside the rim of the round window for a reward. | Dig west of the church near Port Sarim | x=2992, y=3178, plane=0 |  |
 | CT:200 | Cryptic / riddle | You'll need to have Doug Deep into the distant past to get to these sacks | Search Sacks | x=3155..3155, y=5727..5727, plane=0 |  |
 | CT:181 | Cryptic / riddle | You'll need to look for a city with a central fountain. Look for a locked chest in the city's chapel. | Search Closed Chest | x=3256..3256, y=3487..3487, plane=0 |  |

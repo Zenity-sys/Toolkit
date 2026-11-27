@@ -6,6 +6,7 @@ namespace KavrosClueHelper
   public struct Mark {public Rectangle Box;public bool Legacy;public double Score;}
   private sealed class Model {public ImagePattern Pattern;public Size Size;public Point[] Points;public double[] Values;public double Energy;public Point[] Blue;public bool Legacy;}
   public bool Strong {get;private set;}
+  public bool? InterfaceLegacy;
   private readonly List<Model> models=new List<Model>();
   public MinimapAnchor(string assets)
   {
@@ -37,8 +38,8 @@ namespace KavrosClueHelper
   public List<Mark> Marks(Bitmap image)
   {
    var candidates=new List<Mark>();var pixels=new Pixels(image);
-   foreach(Model model in models)foreach(Point hit in model.Pattern.Find(pixels,new Rectangle(Point.Empty,image.Size),1000,100))
-   {double score=Glyph(pixels,hit,model);if(score>=(model.Legacy?0.85:0.60))candidates.Add(new Mark{Box=new Rectangle(hit,model.Size),Legacy=model.Legacy,Score=score});}
+   foreach(Model model in models){if(InterfaceLegacy.HasValue&&model.Legacy!=InterfaceLegacy.Value)continue;foreach(Point hit in model.Pattern.Find(pixels,new Rectangle(Point.Empty,image.Size),1000,100))
+   {double score=Glyph(pixels,hit,model);if(score>=(model.Legacy?0.85:0.60))candidates.Add(new Mark{Box=new Rectangle(hit,model.Size),Legacy=model.Legacy,Score=score});}}
    Strong=candidates.Count>0&&candidates.Max(c=>c.Score)>=0.90;
    var result=new List<Mark>();foreach(Mark candidate in candidates.Where(c=>c.Score>=candidates.Max(v=>v.Score)-0.08).OrderByDescending(c=>c.Score))
    {Rectangle box=candidate.Box;if(!result.Any(r=>Rectangle.Inflate(r.Box,r.Box.Width/2,r.Box.Height/2).Contains(new Point(box.Left+box.Width/2,box.Top+box.Height/2))))result.Add(candidate);}

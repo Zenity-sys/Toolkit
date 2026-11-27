@@ -15,6 +15,7 @@ namespace KavrosClueHelper
         private readonly Timer timer = new Timer();
         private Action click;
         private Size noticeSize = new Size(180, 34);
+        internal static bool TrayHidden;
 
         internal NoticeToast()
         {
@@ -69,7 +70,7 @@ namespace KavrosClueHelper
         internal void Present(string message, bool error, string actionText, Action onClick, Rectangle game, IList<Rectangle> blocked, bool sticky)
         {
             click = onClick;
-            text.Text = message ?? "";
+            text.Text = (TrayHidden && message != null ? message.Replace(" Check the tray.", "") : message) ?? "";
             action.Text = actionText ?? "";
             action.Visible = !string.IsNullOrEmpty(actionText);
             BackColor = error ? KavrosTheme.Danger : KavrosTheme.Panel;

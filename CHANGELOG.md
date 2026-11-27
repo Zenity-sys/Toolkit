@@ -1,5 +1,207 @@
 # Kavros Clue Helper
 
+## 0.9.12
+
+**Puzzles**
+- What's new stays on the clue panel until you press Got it. The note lists this version and the recent ones, and it comes back only after the next update. Settings can open the same note from its What's new button.
+- Lockboxes are found during live play on a 1440p client. The numbers update as soon as you click.
+
+## 0.9.11
+
+**Puzzles**
+- DarkScape sliding puzzles are found while the side panel is open, in live play and on a still capture. The route is solved from the tiles, and the frame stays tracked while you solve it.
+- A DarkScape Celtic Knot whose parchment is only fully visible along the top edge is found on the first look. Brighter gold tracks and the red ring are read with the existing knot.
+
+**Launch**
+- `--show-panel` opens the clue panel at startup, and a second launch with that switch opens the panel of the copy that is already running.
+- `--no-tray` starts the helper without a tray icon. The already-running notice no longer mentions the tray when there is no icon.
+
+## 0.9.10
+
+**Puzzles**
+- Celtic Knot guidance appears on the first clean look, including when it asks you to turn one ring.
+- The click counts update as soon as a ring settles, and a knot that is already open is re-read from that window.
+
+## 0.9.9
+
+**Puzzles**
+- Celtic Knot puzzles are found on the angled window. This works on Modern and DarkScape, without the old full-width title bar. Sand behind the window is not treated as the puzzle.
+
+## 0.9.8
+
+**Puzzles**
+- Towers puzzles are detected during live play again. Each look checks the Towers board before the other puzzle searches, so a full-size client no longer skips it.
+
+## 0.9.7
+
+**Puzzles**
+- Towers puzzles on the DarkScape skin are detected again. The dark brown cells count as the board, and the clue numbers are read.
+
+## 0.9.6
+
+**Scan clues**
+- The Meerkat and auto-follow checkboxes on the scan card are visible again. The guide ends above them, and a long route still wraps on the card.
+- The buttons along the bottom stay clear of the guide.
+
+## 0.9.5
+
+**Scan clues**
+- Elite dungeon scans lock your position on the minimap. Those maps now have white wall lines, the same way Prifddinas already did.
+- The pictures on the clue card are unchanged. The right-click line stays hidden while auto-follow is on.
+
+## 0.9.4
+
+**Scan clues**
+- A scan that says you are too far away still finds you on the minimap. The card keeps the step-by-step guide, the too-far note, and the position once it locks.
+- Coming back into range keeps that position. This is the same for every scan, elite or master.
+
+## 0.9.3
+
+**Scan clues**
+- Opening an elite scan no longer freezes the helper or drops the read back to a full-window search.
+- The idle tick no longer reads the picture the worker is using, and it no longer captures the whole window.
+- Deep Wilderness matches the live title size. A failed text read is ignored instead of crashing, and a failed look is written to crash.log.
+
+## 0.9.2
+
+**Scan clues**
+- Every elite scan in the minigames panel is named on the first look, including Deep Wilderness when you are too far away.
+- A scan or compass that has not changed is kept without searching the boards again.
+- Opening a scroll cancels an idle full-window search instead of waiting for it.
+
+## 0.9.1
+
+**Scan clues**
+- A darker scan in the minigames panel is read on the first look. The sheet is taken from the scroll area, and scale 1.0 is tried on that box before the rest of the window.
+- Prifddinas and the Heart of Gielinor can be named from their title letters.
+- A wide titled clue scroll is still read the same way, ahead of that panel search.
+
+## 0.9
+
+**Compass and scan**
+- The first look tries scale 1.0 right after the Auto guess, then searches the parchment before the rest of the window.
+- A tall narrow compass or scan is read on that sheet, and the board search is skipped while it is open.
+- After a hit, the next capture stays on that sheet.
+
+**Scan tracking**
+- The search radius grows with the time since the last fix and how fast you can run.
+- A fix that is far from the last spot, seen twice in a row, is treated as a teleport and the marker locks there.
+- Two missed frames, or a clear jump of the player dot, start a full search.
+- The minimap crop is wider. A result older than 1.5 seconds stays as the seed for the next search.
+- On the Heart, the north arrow cuts the angles, and the scan area is searched before the full track map.
+
+**Clues**
+- A scan card clears itself 3 seconds after the scan window closes.
+- Clue 188, the Fishing Platform crate, is removed. It can be added back if players get it on Kavros.
+- On an ultrawide client, only the minimap at the right edge is skipped.
+- The sulphur pit master clue shows the TzHaar City map.
+
+## 0.8.1
+
+**Settings**
+- Resolution and Scaling sit on the settings background, in the same flat row style as Check for updates and Blur live preview. The dropdowns themselves are unchanged.
+- The CLIENT heading is shown in full, at the same size as the other section headings.
+- The Client section sits below What's new, with a clear gap. The Interface label sits flat on that section.
+
+A small update keeps its patch number: 0.8.1, 0.8.2, 0.8.3, 0.8.4. The app shows v0.8.1. When the patch is zero it still shows v0.8.
+
+## 0.8
+
+A full step shows one digit after the decimal: 0.8, 0.9, 1.0, 1.1, and on through 1.9, then 2.0. A small update adds a patch (0.8.1, 0.8.2, 0.8.3, 0.8.4). The app shows the patch only when it is not zero, so this release shows v0.8. The tag is v0.8.0 and the assembly version is 0.8.0.0, which the updater treats as newer than 0.7.28.
+
+**Settings**
+- Interface is two toggle boxes, Modern / DarkScape and Legacy. Exactly one is selected, the selected box is gold, and there is no Auto. DarkScape uses the full modern template set.
+- Resolution (Auto, 1080p, 1440p, 4K) and scaling (Auto, 100%, 125%, 150%, 200%) default to Auto. Auto reads the game window and shows the result, for example Auto (1440p). A 2560x1369 window counts as 1440p. If the window cannot be read, Auto uses the last manual choice. That scale is searched first, and the other scales stay as fallback.
+
+## 0.7.28
+
+**Puzzles**
+- The automatic-detection note now only says to keep the full puzzle visible. The tower countdown switch is unchanged.
+
+**Clues**
+- Queen Sigrid's map is the Etceteria castle throne room, floor 1.
+- Hamid: bonfire teleport, then west to the waterfront. The other ways are the Menaphos lodestone and the Menaphos cactus patch.
+- The coordinate clue north of the Lava Maze names the phasmatite rocks.
+- Draynor Village fishing shore: willow teleport, then a short walk. The other ways are the Wizard's Tower and the amulet of glory to Draynor Village.
+- A large framed treasure map is still matched. A sandy sheet and the minimap are still ignored.
+- A scroll title that the text reader misses is still passed to the map and master readers. The board search stays skipped.
+- An anagram still matches when the name is run together or split differently, including after the intro line.
+
+## 0.7.27
+
+**Slider**
+- Every frame starts at the scale this client should be using: the Windows DPI scale, otherwise 1.0, otherwise the scale that matched last. One extra scale is tried only while the frame still has time. The modern frame is checked before the legacy one, unless the legacy interface was the last match.
+- The shortest-route search runs below the reader, so a full-window frame is not stuck behind it.
+
+**Clues**
+- The scroll title bar is still checked on every missed board. Master templates, map matching and text recognition wait a few frames, or until the main scales have been covered. The first look still reads a clue.
+- A tracked text clue keeps its card when the screen has not changed, and still searches for a puzzle that opens somewhere else.
+- A mysterious scroll has to have the dark title bar and the dark frame. A sandy row is not enough.
+
+## 0.7.26
+
+**Slider**
+- A whole-row step advances the route already on screen. The helper does not solve the board again on the UI thread, so the timer and the guide keep moving.
+- One route is shared. A shorter proof replaces it only when the next click stays the same. The first step is the fast route; a shorter one is refined in the background.
+- The guide mask uses the capture offset, so the ring, arrow and badge are ignored on a cropped read. After missed reads the last board stays up.
+
+**Clues**
+- A mysterious clue scroll is found from its title bar first. That frame skips the board search and the master templates and goes straight to the scroll text.
+- An unchanged clue already on screen is not searched again.
+- A large sand sheet and the minimap are not sent to master matching or text recognition.
+
+## 0.7.25
+
+**Slider**
+- The guide is visible in your own screenshots again. It is no longer excluded from capture.
+- Capture does not paint over slider tiles. The reader skips the pixels of the pulse ring, the outline, the arrow and the badge, including in the frame-edge check, and scores the remaining tile pixels.
+- A whole-row click skips the confirm wait when the new board is the next step of the known route.
+- When the short hold expires, the last grid is read again a few pixels either way at the current scale. The board is kept for two more tries before the search falls back to the full window.
+
+**Clues**
+- A mysterious clue scroll on sand or sandstone is found from its dark title bar and thin border. The Hamid cryptic (Speak to Hamid, Menaphos beach) is one of these. The card has three ways and a final step, and no tile coordinates.
+
+## 0.7.24
+
+**Slider**
+- A click that slides the blank is kept. A swap of two picture tiles is still treated as a misread.
+- The last step is held only for about 1.5 seconds after a real read. After that the board is located and solved again, even while the frame is visible. Clue readers are not run on that frame.
+- Three missed reads in a row set the status to "Can't read the tiles - move the mouse off the puzzle". There is no popup.
+- The guide window is excluded from screen capture on Windows 10 2004 and later, and it stays visible to the player. Where that is unavailable, the capture paint covers the full pulse ring and the gold arrow, and the reader is told which cell has the badge.
+
+## 0.7.23
+
+**Slider**
+- While a slider is on screen, a frame in the middle of a move keeps the current step. The clue readers are not run for that frame.
+- A re-read that misses the tiles keeps the last board and tries again shortly. The route is dropped only after three missed reads.
+- One legal move in the same place is shown without waiting for another frame.
+- The legacy close button is looked for a little further from the last position, with the same colour tolerance as the other anchors.
+
+**Windows scaling**
+- The game window's DPI is read once per capture. At 100% the search order is unchanged.
+- At 125%, 150% and 200% the matching scale is searched first: 1.25, 1.5 and 2. The first frame after a DPI change uses that scale.
+- Modern puzzles, the compass, scans and master clues use that order. Scan scale 1.75 is added only when the DPI is nearest to 175%.
+- Legacy frame corners, the close button and the slider mark are also tried as nearest-neighbour copies at that scale, so the blocky legacy interface matches at 125%, 150% and 200%.
+
+## 0.7.22
+
+**Clues**
+- Talk to the Gnome ball referee includes the challenge "What is 57 x 89 + 23?" and the answer 5096.
+
+**Scans**
+- Prifddinas and the Heart of Gielinor are read from the scroll text when the picture match finds nothing. The place name and the paces both have to match. Prifddinas is 30 paces, or 35 with meerkats. The Heart of Gielinor is 49 paces, or 54 with meerkats.
+- The same reading accepts the side parchment, including "you are in range of the coordinate" with the distance in paces.
+
+**Capture**
+- Companion, AFK Warden, the Slayer helper and another Clue Helper are blanked only while they are in front of the game. A window behind the game is left as it was captured.
+
+## 0.7.21
+
+**Clues**
+- Twenty-four cards use the routes checked in-game. Each card still has at most three ways: Fastest, Alternatively, and Third option.
+- A teleport that lands on the spot no longer tells you to run from a lodestone that is not on the card.
+- The portable fairy ring tip stays only on cards that still list a fairy ring.
+
 ## 0.7.20
 
 **Settings**

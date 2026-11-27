@@ -302,6 +302,7 @@ namespace KavrosClueHelper
                     }
                 }
                 using (Bitmap blank = new Bitmap(640, 480)) Check(fullDetector.Detect(blank) == null, "empty image cannot become a puzzle");
+                fullDetector.UseLegacy(true);
                 foreach (string skin in new[] { "rev944", "classic" })
                 {
                     using (Bitmap image = TestFixtures.LockboxImage(skin))

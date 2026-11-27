@@ -108,6 +108,17 @@ namespace KavrosClueHelper
                         Check(Light(image,new Rectangle(content,new Size(floor.Width-30,floor.Height-4)))>10,"selected scan floor text is visible");
                         image.Save(Path.Combine(directory,"v060-elite-scan.png"));
                     }
+                    panel.Show();Application.DoEvents();
+                    Panel scanBox=panel.Controls.OfType<Panel>().Single(p=>p.Controls.OfType<CheckBox>().Any(c=>c.Text=="Meerkat (+5 paces)"));
+                    Label guide=panel.Controls.OfType<Label>().Single(l=>l.Width>300&&l.Top>200);
+                    Panel foot=panel.Controls.OfType<Panel>().Single(p=>p.Controls.OfType<Button>().Any(b=>b.Text=="Exit"));
+                    Check(scanBox.Visible&&scanBox.Controls.OfType<CheckBox>().All(c=>c.Visible),"scan controls are visible");
+                    Check(!guide.Bounds.IntersectsWith(scanBox.Bounds),"the scan guide ends above the scan controls");
+                    Check(guide.Bottom<=scanBox.Top&&scanBox.Bottom<=foot.Top&&foot.Bottom<=panel.ClientSize.Height,"the scan guide, controls and footer stack without covering each other");
+                    Check(panel.GetChildAtPoint(new Point(scanBox.Left+16,scanBox.Top+10))==scanBox,"the scan controls are clickable");
+                    panel.SetPuzzle(new DetectedPuzzle{Kind=PuzzleKind.Scan,Scan=new ScanReading{Region=scans.Single(r=>r.Id==349)}},"");
+                    Check(!guide.Bounds.IntersectsWith(scanBox.Bounds)&&scanBox.Visible&&guide.Height>=248,"a long scan route still leaves the controls clear");
+                    panel.Hide();
                     panel.SetCompass(false);destinations.SelectedIndex=0;map.SetSession(session,true);
                     int generation=session.Generation;session.Observe(new CompassReading{Solved=true},DateTime.UtcNow);session.Observe(new CompassReading{Angle=1.2},DateTime.UtcNow.AddMilliseconds(100));panel.SetCompass(false);
                     Check(session.Generation==generation+1&&session.Bearings.Count==0,"back-to-back compass advances clue generation and clears bearings");

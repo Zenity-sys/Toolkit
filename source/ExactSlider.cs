@@ -69,12 +69,18 @@ namespace KavrosClueHelper
                     job.Upper = lines && SlidingRoute.TryClickRoute(board, upper, out clicks) ? clicks.Count : upper.Count;
                 }
                 active = job;
-                ThreadPool.QueueUserWorkItem(delegate
+                var search = new Thread(delegate()
                 {
                     List<int> route = null;
                     string error = null;
                     ExactSlider.BoundChanged = delegate(int bound) { lock (gate) job.Lower = bound; };
-                    try { route = ExactSlider.Solve(job.Board, upper, lines, job.Stop.Token); }
+                    try
+                    {
+                        // The reader runs below normal. This search stays lower
+                        // so a full-window frame is not stuck behind it.
+                        try { Thread.CurrentThread.Priority = ThreadPriority.Lowest; } catch (Exception) { }
+                        route = ExactSlider.Solve(job.Board, upper, lines, job.Stop.Token);
+                    }
                     catch (OperationCanceledException) { }
                     catch (Exception ex) { error = ex.Message; }
                     finally
@@ -89,6 +95,9 @@ namespace KavrosClueHelper
                         }
                     }
                 });
+                search.IsBackground = true;
+                try { search.Priority = ThreadPriority.Lowest; } catch (Exception) { }
+                search.Start();
             }
         }
 
@@ -174,11 +183,11 @@ namespace KavrosClueHelper
                 analysisEngine.Proofs.Cancel();
                 return;
             }
-            if (waitingSlider == null || slidingBatchNumber != 1) return;
+            if (waitingSlider == null || slidingMoves == null || slidingBatchNumber != 1) return;
             List<int> route;
             string error;
             if (!analysisEngine.Proofs.Read(current.Board, current.Theme, true, out route, out error) || route == null) return;
-            if (waitingSlider.Sliding != null && route.Count >= waitingSlider.Sliding.Count) return;
+            if (route.Count >= slidingMoves.Count || !SliderStep.SameNextClick(current.Board, slidingMoves, route)) return;
             waitingSlider = null;
             SolveAndShow(current, new PuzzlePlan { Puzzle = current, Sliding = route, SlidingOptimal = true, SlidingWholeRows = true });
         }
@@ -194,7 +203,7 @@ namespace KavrosClueHelper
             bool lines = true;
             List<int> route;
             string error;
-            if (analysisEngine.Proofs.Read(puzzle.Board, puzzle.Theme, lines, out route, out error) && route != null)
+            if (analysisEngine.Proofs.Read(puzzle.Board, puzzle.Theme, lines, out route, out error) && route != null && (plan == null || plan.Sliding == null || SliderStep.SameNextClick(puzzle.Board, plan.Sliding, route)))
             {
                 plan = new PuzzlePlan { Puzzle = puzzle, Sliding = route, SlidingOptimal = true, SlidingWholeRows = lines };
                 return false;

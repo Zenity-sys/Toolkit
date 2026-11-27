@@ -92,10 +92,12 @@ namespace KavrosClueHelper
                         }
                         openingTime=timer.ElapsedMilliseconds;Check(found,"opening Lockbox during idle discovery is found without a manual scan");
                         // Keep the real scenery, floor and other game panels around each fixture.
+                        engine.UseLegacy(true);
                         using(Bitmap tower=TestFixtures.TowerModal("rev944")) CheckScene(engine,empty,tower,PuzzleKind.Towers,report);
                         using(Bitmap knot=TestFixtures.KnotModal("rev944")) CheckScene(engine,empty,knot,PuzzleKind.Knot,report);
                         int[] slide=Enumerable.Range(0,25).ToArray();slide[24]=23;slide[23]=24;
                         using(Bitmap slider=TestFixtures.SliderImage("castle",slide,"rev944")) CheckScene(engine,empty,slider,PuzzleKind.Sliding,report);
+                        engine.UseLegacy(false);
                         foreach(MasterClue clue in MasterClues.All)
                         using(Bitmap screenshot=new Bitmap(Path.Combine(fixtures,"master",clue.Id+".png")))
                         using(Bitmap scene=(Bitmap)empty.Clone())
@@ -113,7 +115,9 @@ namespace KavrosClueHelper
                     Check(detector.ReadTowers(tower,new Rectangle(35,35,218,218),1,true)==null,"partial Tower clues are rejected even through the old allowPartial entry point");
                 }
                 var impossible=new TowerPuzzle{Top=Enumerable.Repeat(1,5).ToArray(),Bottom=Enumerable.Repeat(1,5).ToArray(),Left=Enumerable.Repeat(1,5).ToArray(),Right=Enumerable.Repeat(1,5).ToArray()};
+                detector.UseLegacy(true);
                 using(Bitmap tower=TestFixtures.TowerModal("rev944",false,false,null,impossible)) Check(detector.Detect(tower)==null,"twenty readable but contradictory Tower clues are rejected");
+                detector.UseLegacy(false);
                 foreach(string name in new[]{"towers-multiple.png","towers-multiple-small.png"})
                 using(Bitmap tower=new Bitmap(Path.Combine(fixtures,"master",name)))
                 using(AnalysisResult r=engine.Analyze(tower,3203,false,CancellationToken.None))

@@ -137,6 +137,12 @@ namespace KavrosClueHelper
         // covers most of the client is left alone so a transparent shell is not wiped.
         public static List<Rectangle> CoverRects(IEnumerable<GameWindow> windows, Rectangle capture, int selfProcessId)
         {
+            return CoverRects(windows, capture, selfProcessId, null);
+        }
+        // inFront is the same check the helper uses for its own panel: a window is
+        // blanked only when it is the window actually drawn over the game.
+        public static List<Rectangle> CoverRects(IEnumerable<GameWindow> windows, Rectangle capture, int selfProcessId, Func<GameWindow, Rectangle, bool> inFront)
+        {
             List<Rectangle> covers = new List<Rectangle>();
             if (windows == null || capture.Width < 1 || capture.Height < 1) return covers;
             long limit = (long)capture.Width * capture.Height * 7 / 10;
@@ -147,6 +153,7 @@ namespace KavrosClueHelper
                 Rectangle hit = Rectangle.Intersect(window.Client, capture);
                 if (hit.Width < 1 || hit.Height < 1) continue;
                 if ((long)hit.Width * hit.Height > limit) continue;
+                if (inFront != null && !inFront(window, hit)) continue;
                 covers.Add(hit);
             }
             return covers;
@@ -180,7 +187,10 @@ namespace KavrosClueHelper
                     found.Add(new GameWindow { Handle = window, ProcessId = pid, ProcessName = name, Title = "overlay", Client = Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom) });
                     return true;
                 }, IntPtr.Zero);
-                covers = CoverRects(found, screenArea, self);
+                covers = CoverRects(found, screenArea, self, delegate(GameWindow window, Rectangle overlap)
+                {
+                    return GameVisibility.Any(overlap, delegate(Point point) { return AtPoint(window.Handle, point, IntPtr.Zero); });
+                });
             }
             catch (Exception ex) { CrashLog.Write(ex); }
             return covers;

@@ -19,36 +19,59 @@ namespace KavrosClueHelper
         private OcrEngine engine;
         private bool initialized;
         public string Unavailable;
+        private Stopwatch budget;
+        private int budgetMs;
+        private bool OverBudget()
+        {
+            return budget!=null && budget.ElapsedMilliseconds>budgetMs;
+        }
         private T Wait<T>(IAsyncOperation<T> operation)
         {
-            Stopwatch timer=Stopwatch.StartNew();
             try
             {
+                // The UI tick must not abort this wait. The whole Read call
+                // shares one deadline and a failure becomes no text.
                 while(operation.Status==AsyncStatus.Started)
                 {
-                    SearchCancellation.Check();
-                    if(timer.ElapsedMilliseconds>2500)throw new TimeoutException("Windows text recognition timed out.");
+                    if(OverBudget())throw new TimeoutException("Windows text recognition timed out.");
                     Thread.Sleep(2);
                 }
-                SearchCancellation.Check();return operation.GetResults();
+                if(OverBudget())throw new TimeoutException("Windows text recognition timed out.");
+                return operation.GetResults();
             }
-            catch {operation.Cancel();throw;}
+            catch { try{operation.Cancel();}catch(Exception){} throw; }
             finally{operation.Close();}
         }
         public string Read(Bitmap image)
         {
-            if(Thread.CurrentThread.GetApartmentState()==ApartmentState.STA)
+            return Read(image,2500);
+        }
+        public string Read(Bitmap image, int budgetMilliseconds)
+        {
+            try
             {
-                var token=SearchCancellation.Token;
-                return System.Threading.Tasks.Task.Run(()=>{SearchCancellation.Token=token;try{return ReadCore(image);}finally{SearchCancellation.Token=CancellationToken.None;}}).GetAwaiter().GetResult();
+                if(image==null||budgetMilliseconds<1)return null;
+                budget=Stopwatch.StartNew();
+                budgetMs=budgetMilliseconds;
+                if(Thread.CurrentThread.GetApartmentState()==ApartmentState.STA)
+                    return System.Threading.Tasks.Task.Run(delegate{return ReadCore(image);}).GetAwaiter().GetResult();
+                return ReadCore(image);
             }
-            return ReadCore(image);
+            catch(Exception ex)
+            {
+                CrashLog.Write(ex);
+                return null;
+            }
         }
         private string ReadCore(Bitmap image)
         {
             try{return Recognize(image);}
-            catch(OperationCanceledException){throw;}
-            catch(Exception e){Unavailable=e is TimeoutException?e.Message:"Windows English text recognition is unavailable. Enable the English OCR language in Windows Settings.";return null;}
+            catch(Exception e)
+            {
+                TimeoutException timeout=e as TimeoutException;
+                Unavailable=timeout!=null?e.Message:"Windows English text recognition is unavailable. Enable the English OCR language in Windows Settings.";
+                return null;
+            }
         }
         private string Recognize(Bitmap image)
         {

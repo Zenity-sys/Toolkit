@@ -115,6 +115,7 @@ namespace KavrosClueHelper
         [DllImport("user32.dll")] public static extern bool UnregisterHotKey(IntPtr window, int id);
         [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr window, int message, IntPtr wparam, IntPtr lparam);
         public const int NoticeMessage = 0x8014;
+        public const int ShowPanelMessage = 0x8015;
         [DllImport("dwmapi.dll")] public static extern int DwmFlush();
 
         [DllImport("user32.dll", EntryPoint = "SetWindowLong")] static extern int SetWindowLong32(IntPtr window, int index, int value);

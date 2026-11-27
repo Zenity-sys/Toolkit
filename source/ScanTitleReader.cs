@@ -47,7 +47,10 @@ namespace KavrosClueHelper
         }
         private static double Score(Glyphs a,Glyphs b)
         {
-            if(a==null||b==null||Math.Abs(Math.Log(a.Width*(double)b.Height/(a.Height*b.Width)))>.30)return 0;
+            // Live title ink is about 89x8. A stored line with a descender is
+            // about 11px, and log(87*8/(11*89)) is 0.34. 0.42 still rejects a
+            // second text line (20px against 8px is 0.92).
+            if(a==null||b==null||Math.Abs(Math.Log(a.Width*(double)b.Height/(a.Height*b.Width)))>.42)return 0;
             int both=0,total=0;
             for(int y=0;y<a.Height;y++)for(int x=0;x<a.Width;x++)
             {

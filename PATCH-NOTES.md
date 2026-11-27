@@ -1,3 +1,139 @@
+# Kavros Clue Helper v0.9.12
+
+What's new stays on the clue panel until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.
+
+Settings shows **Made by Zenity  ·  v0.9.12**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.11
+
+DarkScape sliding puzzles are found while the side panel is open, and a DarkScape Celtic Knot whose top edge is the only full parchment line is found on the first look. `--show-panel` opens the clue panel at launch, and `--no-tray` starts the helper without a tray icon.
+
+Settings shows **Made by Zenity  ·  v0.9.11**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.10
+
+Celtic Knot guidance appears on the first clean look, including when it asks you to turn one ring. The click counts update as soon as a ring settles, and a knot that is already open is re-read from that window.
+
+Settings shows **Made by Zenity  ·  v0.9.10**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.9
+
+Celtic Knot puzzles are found on the angled window. This works on Modern and DarkScape, without the old full-width title bar. Sand behind the window is not treated as the puzzle.
+
+Settings shows **Made by Zenity  ·  v0.9.9**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.8
+
+Towers puzzles are detected during live play again. Each look checks the Towers board before the other puzzle searches, so a full-size client no longer skips it.
+
+Settings shows **Made by Zenity  ·  v0.9.8**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.7
+
+Towers puzzles on the DarkScape skin are detected again. The dark brown cells count as the board, and the clue numbers are read.
+
+Settings shows **Made by Zenity  ·  v0.9.7**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.6
+
+The Meerkat and auto-follow checkboxes on the scan card are visible again. The guide ends above them, and a long route still wraps on the card. The buttons along the bottom stay clear.
+
+Settings shows **Made by Zenity  ·  v0.9.6**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.5
+
+Elite dungeon scans lock your position on the minimap. The wall lines on those maps are white, the same way Prifddinas already was. The pictures on the clue card are unchanged. The right-click line stays hidden while auto-follow is on.
+
+Settings shows **Made by Zenity  ·  v0.9.5**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.4
+
+A scan that says you are too far away still tracks your minimap. The card keeps the steps, the too-far note, and the position once it is found. Coming into range keeps that lock.
+
+Settings shows **Made by Zenity  ·  v0.9.4**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.3
+
+Opening an elite scan, including Deep Wilderness, no longer freezes the helper or clears the current read. The title matches the letters on the scroll. A failed text read is ignored, and a failed look is written to crash.log.
+
+Settings shows **Made by Zenity  ·  v0.9.3**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.2
+
+Every elite scan in the minigames panel is read on the first look, including Deep Wilderness when the orb says you are too far away. An unchanged scan or compass is kept without another board search. A scroll that opens during an idle search is read straight away.
+
+Settings shows **Made by Zenity  ·  v0.9.2**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9.1
+
+A scan clue open in the minigames panel is read on the first look, including the darker Prifddinas parchment. Scale 1.0 is tried on that sheet before the rest of the window. Prifddinas and the Heart of Gielinor are named from their titles. Wide clue scrolls are unchanged.
+
+Settings shows **Made by Zenity  ·  v0.9.1**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.9
+
+Compass and scan clues are read on the parchment first, with scale 1.0 right after the Auto guess. A tall narrow sheet skips the board search, and the next capture stays on that sheet.
+
+Scan tracking follows a run or a teleport. Two misses, or a clear jump, search the whole minimap. The Heart uses north to cut the angles and checks the scan area before the full track map. A scan card clears 3 seconds after the scan window closes.
+
+The Fishing Platform crate clue is removed until players get it on Kavros. An ultrawide minimap is ignored from the right edge, so a clue further left is still read. The sulphur pit master clue shows the TzHaar City map.
+
+Settings shows **Made by Zenity  ·  v0.9**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.8.1
+
+The Resolution and Scaling row no longer sits on a dark box. Those labels and dropdowns sit flat on the settings background, like Check for updates and Blur live preview. The dropdowns themselves are unchanged.
+
+The CLIENT heading is shown in full. The Client section, including Interface and the Resolution and Scaling row, sits below What's new with a clear gap. The Interface label sits flat on that section.
+
+Settings shows **Made by Zenity  ·  v0.8.1**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.8
+
+The interface is two toggle boxes: Modern / DarkScape and Legacy. Exactly one is selected, the selected box is gold, and there is no Auto. DarkScape uses the full modern template set.
+
+Resolution and scaling are dropdowns. Auto reads the game window (a 2560x1369 client counts as 1440p) and shows what it found. If the window cannot be read, Auto uses the last manual choice.
+
+Versions show one digit after the decimal, rounding up: 0.8, 0.9, 1.0, 1.1 ... 1.9, 2.0. Never 0.10 or 1.10. This release is v0.8. The tag is v0.8.0 so the updater still sees it as newer than 0.7.28.
+
+Settings shows **Made by Zenity  ·  v0.8**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.7.27
+
+v0.7.27: Opening a slider shows the guide on the first look at the scale the client is using. A tracked text clue still notices a puzzle that opens somewhere else, and a mysterious scroll still needs its dark title bar and frame.
+
+Settings shows **Made by Zenity · v0.7.27**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.7.25
+
+v0.7.25: The slider guide stays in your own screenshots. Capture no longer paints over the tiles; the reader ignores the ring, arrow and badge and keeps using the clean pixels. A click that slides a whole row is shown immediately when it matches the route. If a read misses, the last grid is tried again a few pixels either way before the whole window is searched. Mysterious clue scrolls on sand, including the Hamid cryptic, are found from the dark title bar.
+
+Settings shows **Made by Zenity · v0.7.25**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.7.24
+
+v0.7.24: Clicking a slider tile shows the next step again. The guide is left out of the capture on Windows 10 2004 and later, and the fallback paint covers the pulse ring and the arrow. A missed read keeps the last step for about a second and a half, then reads the board again. After three misses the status asks you to move the mouse off the puzzle.
+
+Settings shows **Made by Zenity · v0.7.24**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.7.23
+
+v0.7.23: A slider that is still on screen keeps its next step instead of reading every other clue. Windows 125% (and 150% and 200%) searches the matching interface size first. The legacy corners and close button are also matched as blocky pixels at those sizes. The modern interface uses the same 1.25 scale it already uses for 150% and 200%.
+
+Settings shows **Made by Zenity · v0.7.23**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.7.22
+
+v0.7.22: The gnomeball referee card shows its challenge answer. Prifddinas and Heart of Gielinor scans are recognised from the scroll text when the picture does not match. A helper window sitting behind the game is left on the capture.
+
+Settings shows **Made by Zenity · v0.7.22**. The full notes are in CHANGELOG.md.
+
+# Kavros Clue Helper v0.7.21
+
+v0.7.21: Twenty-four clue cards use the travel routes checked in-game. A teleport that lands on the spot no longer sends you off from a lodestone that is not on the card, and the fairy ring tip stays only where a fairy ring is still listed.
+
+Settings shows **Made by Zenity · v0.7.21**. The full notes are in CHANGELOG.md.
+
 # Kavros Clue Helper v0.7.20
 
 v0.7.20: Blur live preview sits under Check for updates at startup, and What's new sits under Check for updates. The hard cryptic about four blades is the Lumbridge windmill: combat bracelet to the Champions' Guild, then south-west, and search the crates on the top floor.

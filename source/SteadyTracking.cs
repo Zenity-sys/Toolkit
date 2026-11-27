@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace KavrosClueHelper
 {
@@ -63,6 +65,137 @@ namespace KavrosClueHelper
         {
             return Math.Abs(a.X - b.X) <= tolerance && Math.Abs(a.Y - b.Y) <= tolerance
                 && Math.Abs(a.Width - b.Width) <= tolerance && Math.Abs(a.Height - b.Height) <= tolerance;
+        }
+    }
+
+    public static class LockboxStep
+    {
+        // A locked lockbox is read again on this interval. Short enough that a
+        // click shows on the next frame, long enough that a one-frame misread
+        // is still held by the normal miss rule.
+        public const int RereadMilliseconds = 40;
+        public static int AppliedClicks(int[] from, int[] to, int direction)
+        {
+            if (from == null || to == null || from.Length != 25 || to.Length != 25) return 0;
+            if (direction != 1 && direction != -1) return 0;
+            for (int i = 0; i < 25; i++) if (from[i] < 0 || from[i] > 2 || to[i] < 0 || to[i] > 2) return 0;
+            if (Same(from, to)) return 0;
+            for (int i = 0; i < 25; i++)
+            {
+                int[] once = (int[])from.Clone();
+                LockboxSolver.Click(once, i, 1, direction);
+                if (Same(once, to)) return 1;
+            }
+            for (int first = 0; first < 25; first++)
+            for (int second = 0; second < 25; second++)
+            {
+                int[] twice = (int[])from.Clone();
+                LockboxSolver.Click(twice, first, 1, direction);
+                LockboxSolver.Click(twice, second, 1, direction);
+                if (Same(twice, to)) return 2;
+            }
+            return 0;
+        }
+        static bool Same(int[] left, int[] right)
+        {
+            for (int i = 0; i < 25; i++) if (left[i] != right[i]) return false;
+            return true;
+        }
+        // One or two legal clicks from the board on screen. Anything else,
+        // including a corrupted read, still waits for a second frame.
+        public static bool SkipConfirm(DetectedPuzzle shown, DetectedPuzzle next, int direction)
+        {
+            if (shown == null || next == null || shown.Kind != PuzzleKind.Lockbox || next.Kind != PuzzleKind.Lockbox) return false;
+            if (!SteadyPolicy.Near(shown.Bounds, next.Bounds, 8) || !SteadyPolicy.Near(shown.Grid, next.Grid, 8)) return false;
+            int clicks = AppliedClicks(shown.Board, next.Board, direction);
+            return clicks == 1 || clicks == 2;
+        }
+    }
+
+    public static class SliderStep
+    {
+        public static bool OneLegalMove(int[] from, int[] to)
+        {
+            if (from == null || to == null || from.Length != 25 || to.Length != 25) return false;
+            int blank = Array.IndexOf(from, 24);
+            if (blank < 0) return false;
+            foreach (int next in SlidingSolver.Neighbours(blank))
+            {
+                if (to[next] != 24 || to[blank] != from[next]) continue;
+                bool same = true;
+                for (int i = 0; i < 25; i++)
+                {
+                    if (i == blank || i == next) continue;
+                    if (from[i] != to[i]) { same = false; break; }
+                }
+                if (same) return true;
+            }
+            return false;
+        }
+        // The board did not move on screen and the tiles are one click on.
+        // That frame can be shown without waiting for a second read.
+        public static bool SkipConfirm(DetectedPuzzle shown, DetectedPuzzle next)
+        {
+            return SkipConfirm(shown, next, null);
+        }
+        public static bool SkipConfirm(DetectedPuzzle shown, DetectedPuzzle next, IList<int> route)
+        {
+            if (shown == null || next == null || shown.Kind != PuzzleKind.Sliding || next.Kind != PuzzleKind.Sliding) return false;
+            if (!SteadyPolicy.Near(shown.Bounds, next.Bounds, 8) || !SteadyPolicy.Near(shown.Grid, next.Grid, 8)) return false;
+            if (OneLegalMove(shown.Board, next.Board)) return true;
+            List<int> remaining;
+            return SlidingRoute.Advance(shown.Board, route, next.Board, out remaining);
+        }
+        // 0 = the fresh read matches or continues the route.
+        // 1 = keep the last board and try again.
+        // 2 = three bad reads, drop the route.
+        public static int Reread(bool matched, bool advanced, int priorMisses)
+        {
+            if (matched || advanced) return 0;
+            if (priorMisses >= 2) return 2;
+            return 1;
+        }
+        // The form displays the route the engine already owns. A whole-row
+        // step matches any later board on that route. This never solves.
+        public static bool Follow(int[] shownBoard, IList<int> shownRoute, int[] nextBoard, IList<int> preparedRoute, out List<int> route, out int consumed)
+        {
+            route = null;
+            consumed = 0;
+            if (nextBoard == null || !SlidingSolver.IsValid(nextBoard)) return false;
+            if (shownBoard != null && shownRoute != null && SlidingSolver.IsValid(shownBoard))
+            {
+                if (shownBoard.SequenceEqual(nextBoard))
+                {
+                    route = SameStep(shownBoard, shownRoute, preparedRoute);
+                    return true;
+                }
+                List<int> remaining;
+                if (SlidingRoute.Advance(shownBoard, shownRoute, nextBoard, out remaining))
+                {
+                    consumed = shownRoute.Count - remaining.Count;
+                    route = remaining;
+                    return true;
+                }
+            }
+            if (preparedRoute != null && SlidingRoute.Playable(nextBoard, preparedRoute))
+            {
+                route = new List<int>(preparedRoute);
+                return true;
+            }
+            return false;
+        }
+        public static bool SameNextClick(int[] board, IList<int> shown, IList<int> prepared)
+        {
+            List<int> left, right;
+            if (board == null || shown == null || prepared == null) return false;
+            if (!SlidingRoute.TryClickRoute(board, shown, out left) || !SlidingRoute.TryClickRoute(board, prepared, out right)) return false;
+            return left.Count > 0 && right.Count > 0 && left[0] == right[0];
+        }
+        static List<int> SameStep(int[] board, IList<int> shown, IList<int> prepared)
+        {
+            if (prepared != null && prepared.Count < shown.Count && SlidingRoute.Playable(board, prepared) && SameNextClick(board, shown, prepared))
+                return new List<int>(prepared);
+            return new List<int>(shown);
         }
     }
 

@@ -24,14 +24,15 @@ namespace KavrosClueHelper
                 string assets=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets");
                 using(var image=new Bitmap(Path.Combine(assets,"test_assets","reported","slider-native.png")))
                 {
-                    var detector=new PuzzleDetector(assets);DetectedPuzzle puzzle=detector.Detect(image);var watch=Stopwatch.StartNew();var result=SlidingClickOptimizer.Solve(puzzle.Board);int clicks=SlidingRoute.ClickRoute(puzzle.Board,result.Moves).Count;
+                    var detector=new PuzzleDetector(assets);detector.UseLegacy(true);DetectedPuzzle puzzle=detector.Detect(image);var watch=Stopwatch.StartNew();var result=SlidingClickOptimizer.Solve(puzzle.Board);int clicks=SlidingRoute.ClickRoute(puzzle.Board,result.Moves).Count;
                     log.AppendLine("Supplied screenshot: "+clicks+" whole-line clicks, "+result.Moves.Count+" tile shifts, "+watch.ElapsedMilliseconds+"ms; shortest proven="+result.Optimal);
                     check(Finishes(puzzle.Board,result.Moves),"Supplied screenshot click route is valid");check(clicks<85,"Global click search improves the compressed tile route");
-                    var engine=new PuzzleAnalysisEngine(assets);using(AnalysisResult first=engine.Analyze(image,1600,false,CancellationToken.None,true,true))
+                    var engine=new PuzzleAnalysisEngine(assets);engine.UseLegacy(true);using(AnalysisResult first=engine.Analyze(image,1600,false,CancellationToken.None,true,true))
                     {check(first.Plan!=null&&first.Plan.SlidingWholeRows&&Finishes(puzzle.Board,first.Plan.Sliding),"Live analysis uses the selected click cost model");using(AnalysisResult again=engine.Analyze(image,1600,false,CancellationToken.None,true,true))check(again.Unchanged&&again.Plan.SlidingWholeRows,"Unchanged line route is cached");}
                 }
                 int[] two=(int[])goal.Clone();two[22]=24;two[23]=22;two[24]=23;
                 var proofEngine=new PuzzleAnalysisEngine(assets);
+                proofEngine.UseLegacy(true);
                 using(Bitmap line=TestFixtures.SliderImage("castle",two,"rev944"))
                 using(AnalysisResult first=proofEngine.Analyze(line,1800,false,CancellationToken.None,true,true))
                 {
@@ -41,6 +42,7 @@ namespace KavrosClueHelper
                     using(AnalysisResult midway=proofEngine.Analyze(animation,1800,false,CancellationToken.None,true,true))
                         check(midway.Plan!=null&&!midway.Plan.SlidingOptimal&&midway.Plan.Sliding.Count==1,"An intermediate line animation cannot inherit an invalid shortest-click proof");
                     var switchEngine=new PuzzleAnalysisEngine(assets);
+                    switchEngine.UseLegacy(true);
                     using(AnalysisResult original=switchEngine.Analyze(line,1801,false,CancellationToken.None,true,true))
                     using(AnalysisResult switched=switchEngine.Analyze(line,1801,false,CancellationToken.None,true,false))
                         check(switched.Plan!=null&&!switched.Plan.SlidingWholeRows&&switched.Plan.Sliding.Count==2,"Changing the cost model rebuilds the correct route");

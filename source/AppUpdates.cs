@@ -17,7 +17,7 @@ namespace KavrosClueHelper
 
         internal static void Start()
         {
-            try { VelopackApp.Build().OnRestarted(delegate(SemanticVersion version) { RestartedVersion = version == null ? "" : version.ToString(); }).Run(); }
+                try { VelopackApp.Build().OnRestarted(delegate(SemanticVersion version) { RestartedVersion = version == null ? "" : AppBranding.Shown(version.ToString()); }).Run(); }
             catch (Exception ex) { CrashLog.Write(ex); }
         }
 
@@ -52,12 +52,12 @@ namespace KavrosClueHelper
                 {
                     if (interactive)
                     {
-                        string current = manager.CurrentVersion == null ? AppBranding.DisplayVersion : manager.CurrentVersion.ToString();
+                        string current = manager.CurrentVersion == null ? AppBranding.DisplayVersion : AppBranding.Shown(manager.CurrentVersion.ToString());
                         Tell(owner, "You are on the latest version (" + current + ").", false, null, null);
                     }
                     return;
                 }
-                string version = info.TargetFullRelease.Version.ToString();
+                string version = AppBranding.Shown(info.TargetFullRelease.Version.ToString());
                 Tell(owner, "Update ready. Click to restart.", false, "Restart", delegate
                 {
                     ThreadPool.QueueUserWorkItem(delegate

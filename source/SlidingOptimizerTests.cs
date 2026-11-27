@@ -18,7 +18,7 @@ namespace KavrosClueHelper
                 string assets=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"assets");
                 using(var native=new Bitmap(Path.Combine(assets,"test_assets","reported","slider-native.png")))
                 {
-                    DetectedPuzzle puzzle=new PuzzleDetector(assets).Detect(native);check(puzzle!=null&&puzzle.Kind==PuzzleKind.Sliding,"Supplied native slider is recognised");
+                    var nativeDetector=new PuzzleDetector(assets);nativeDetector.UseLegacy(true);DetectedPuzzle puzzle=nativeDetector.Detect(native);check(puzzle!=null&&puzzle.Kind==PuzzleKind.Sliding,"Supplied native slider is recognised");
                     List<int> old=SlidingRoute.Compact(puzzle.Board,SlidingSolver.Solve(puzzle.Board));var watch=Stopwatch.StartNew();SlidingOptimization route=SlidingOptimizer.Solve(puzzle.Board);
                     check(route.Moves.Count<=old.Count&&Apply(puzzle.Board,route.Moves).SequenceEqual(goal),"Supplied screenshot uses a shorter valid route");
                     var clicks=SlidingRoute.ClickRoute(puzzle.Board,route.Moves);int[] grouped=(int[])puzzle.Board.Clone();
