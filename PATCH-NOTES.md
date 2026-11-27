@@ -1,3 +1,9 @@
+# Kavros Clue Helper v0.9.11
+
+DarkScape sliding puzzles are found while the side panel is open, and a DarkScape Celtic Knot whose top edge is the only full parchment line is found on the first look. `--show-panel` opens the clue panel at launch, and `--no-tray` starts the helper without a tray icon.
+
+Settings shows **Made by Zenity  ·  v0.9.11**. The full notes are in CHANGELOG.md.
+
 # Kavros Clue Helper v0.9.10
 
 Celtic Knot guidance appears on the first clean look, including when it asks you to turn one ring. The click counts update as soon as a ring settles, and a knot that is already open is re-read from that window.

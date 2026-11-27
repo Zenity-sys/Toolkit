@@ -139,9 +139,42 @@ namespace KavrosClueHelper
     float[] dpi125=PuzzleDetector.SearchOrder(1369,120);
     Check(Math.Abs(dpi125[0]-1.75F)<0.02F&&Math.Abs(dpi125[1]-1F)<0.02F,"1440p at 125% tries scale 1.75 then 1.0");
     Check(Math.Abs(PuzzleDetector.SearchOrder(1369,96)[0]-1.25F)<0.02F,"1440p at 100% starts at 1.25");
+    DarkscapeSlider(assets,"darkscape-slider-snow.png","archers");
+    DarkscapeSlider(assets,"darkscape-slider-house.png","v");
     File.AppendAllText(report,"V0.5.5 SLIDER GUIDANCE PASS: "+checks+" assertions. Visible badges, twelve consecutive moves, rolling four-step previews, animation retention, closure and scaled tile reading. No windows shown or game input/capture.\r\n");return 0;
    }
    catch(Exception e){File.AppendAllText(report,e+"\r\n");return 1;}
+  }
+  static void DarkscapeSlider(string assets,string file,string theme)
+  {
+   string path=Path.Combine(assets,"test_assets","darkscape",file);
+   using(Bitmap image=new Bitmap(path))
+   {
+    var liveDetector=new PuzzleDetector(assets);
+    using(AnalysisResult live=new PuzzleAnalysisEngine(assets).Analyze(image,1,false,CancellationToken.None,true))
+     SliderSolved(live,liveDetector,image,file+" live",theme);
+    var stillDetector=new PuzzleDetector(assets);
+    using(AnalysisResult still=new PuzzleAnalysisEngine(assets).Analyze(image,1,false,CancellationToken.None,false))
+     SliderSolved(still,stillDetector,image,file+" still",theme);
+   }
+  }
+  static void SliderSolved(AnalysisResult result,PuzzleDetector detector,Bitmap image,string name,string theme)
+  {
+   Check(result.Plan!=null&&result.Plan.Puzzle!=null&&result.Plan.Puzzle.Kind==PuzzleKind.Sliding,name+" detects the slider");
+   if(result.Plan==null||result.Plan.Puzzle==null)return;
+   DetectedPuzzle puzzle=result.Plan.Puzzle;
+   Check(puzzle.Theme==theme,name+" matches "+theme+" and saw "+puzzle.Theme);
+   Check(result.Plan.Sliding!=null&&result.Plan.Sliding.Count>0,name+" has a route");
+   Check(detector.SliderFrameVisible(image,puzzle),name+" frame stays visible");
+   if(puzzle.Board==null||result.Plan.Sliding==null)return;
+   int[] board=(int[])puzzle.Board.Clone();
+   foreach(int move in result.Plan.Sliding)
+   {
+    int blank=Array.IndexOf(board,24);
+    Check(blank>=0&&Math.Abs(blank/5-move/5)+Math.Abs(blank%5-move%5)==1,name+" route stays adjacent");
+    board[blank]=board[move];board[move]=24;
+   }
+   Check(board.SequenceEqual(Enumerable.Range(0,25)),name+" route solves the board");
   }
   static void TimeCapture(string report,string label,Bitmap source,string assets)
   {

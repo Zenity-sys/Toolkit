@@ -282,8 +282,10 @@ namespace KavrosClueHelper
                         else if(narrowSheet && !keepOpen)
                         {
                             // The sheet was not a scan. A compass can still sit
-                            // outside that box. Boards stay off this look.
+                            // outside that box. A bright side panel is not a
+                            // clue, so the slider close button is still checked.
                             puzzle=detector.FindCompass(image,pixels);
+                            if(puzzle==null)puzzle=detector.FindOpenSlider(image,pixels);
                             if(puzzle==null)
                                 return new AnalysisResult{Preview=MakePreview(image,new Rectangle(Point.Empty,image.Size)),Milliseconds=timer.ElapsedMilliseconds};
                         }

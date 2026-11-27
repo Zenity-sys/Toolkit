@@ -18,6 +18,8 @@ namespace KavrosClueHelper
                 var detector=new PuzzleDetector(assets);
                 using(Bitmap dark=new Bitmap(Path.Combine(assets,"test_assets","knot","darkscape-1920.png")))
                     Solve(detector,dark,"DarkScape 1920x1027",check);
+                using(Bitmap swamp=new Bitmap(Path.Combine(assets,"test_assets","knot","darkscape-knot-1920.png")))
+                    Solve(detector,swamp,"DarkScape knot 1920x1027",check);
                 using(Bitmap modern=new Bitmap(Path.Combine(assets,"test_assets","knot","modern-2560.png")))
                 {
                     Solve(detector,modern,"Modern 2560x1369",check);

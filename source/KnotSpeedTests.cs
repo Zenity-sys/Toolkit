@@ -67,6 +67,7 @@ namespace KavrosClueHelper
                 check(DetectionPolicy.NeedsConfirmation(spinning), "a mid-spin knot still waits for another frame");
                 CheckLive(check, assets, "modern-2560.png", "Modern 2560x1369");
                 CheckLive(check, assets, "darkscape-1920.png", "DarkScape 1920x1027");
+                CheckLive(check, assets, "darkscape-knot-1920.png", "DarkScape knot 1920x1027");
                 var detector = new PuzzleDetector(assets);
                 using (Bitmap image = TestFixtures.KnotModal())
                 {
