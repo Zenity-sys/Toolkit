@@ -29,7 +29,7 @@ namespace KavrosClueHelper
         internal static string Text()
         {
             return "v0.9.12\r\n"
-                + "What's new stays at the bottom of this window until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.\r\n"
+                + "What's new stays on the clue panel until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.\r\n"
                 + "\r\n"
                 + "v0.9.11\r\n"
                 + "DarkScape sliding puzzles are found while the side panel is open. A Celtic Knot whose top edge is the only full line of parchment is found on the first look. The clue panel can open at launch, and the helper can start without a tray icon.\r\n"
@@ -52,6 +52,12 @@ namespace KavrosClueHelper
         internal const int Bottom = 12;
         internal const int Pad = 8;
         internal const int Header = 32;
+        internal const int ClientGap = 14;
+        internal const int PanelGap = 12;
+        internal const int PanelBottom = 12;
+        // The idle card already keeps 10 px under the button row. The notes
+        // replace that tail with a 12 px gap, the banner, and 12 px below it.
+        internal static int PanelExtra { get { return PanelGap + BannerHeight + PanelBottom - 10; } }
         internal static int Extra { get { return BannerHeight + Bottom; } }
         internal static Rectangle Host(Size client)
         {

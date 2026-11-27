@@ -250,6 +250,10 @@ namespace KavrosClueHelper
         public event Action QuickSliderRequested;
         private Label banner; private Timer bannerTimer; private bool bannerShown, layoutBanner;
         private const int BannerHeight = 28;
+        private Panel notesHost;
+        private TextBox notesBody;
+        private bool notesOpen, layoutNotes;
+        internal bool ReleaseNotesOpen { get { return notesOpen; } }
         public void ShowBanner(string message, bool error)
         {
             if (banner == null)
@@ -365,9 +369,51 @@ namespace KavrosClueHelper
             ButtonAt(footer,"Save debug",132,0,96,delegate{if(DebugRequested!=null)DebugRequested();});
             ButtonAt(footer,"Clear",234,0,62,delegate{scanSession.Clear();if(ClearRequested!=null)ClearRequested();});
             ButtonAt(footer,"Exit",302,0,78,delegate{if(ExitRequested!=null)ExitRequested();});
+            BuildReleaseNotes();
+            notesOpen = ReleaseNotes.IsNewer(prefs.SeenNotes, AppBranding.DisplayVersion);
             positions.Text="";
             SetWaiting("Open Kavros and a clue or puzzle.");
             ApplyOverlayPolish();
+        }
+        void BuildReleaseNotes()
+        {
+            notesHost = new Panel { Name = "WhatsNewBanner", BackColor = KavrosTheme.BgRaise, Visible = false };
+            Label heading = new Label { Name = "WhatsNewHeading", Text = "What's new", ForeColor = KavrosTheme.Gold, BackColor = KavrosTheme.BgRaise, Font = KavrosTheme.Ui(10F, true), TextAlign = ContentAlignment.MiddleLeft };
+            OpaqueButton dismiss = new OpaqueButton { Name = "WhatsNewDismiss", Text = "Got it", Tone = ButtonTone.Secondary, FlatStyle = FlatStyle.Flat, BackColor = KavrosTheme.Button, ForeColor = KavrosTheme.Text };
+            dismiss.FlatAppearance.BorderColor = KavrosTheme.ButtonLine;
+            Style(dismiss);
+            dismiss.Click += delegate { DismissReleaseNotes(); };
+            notesBody = new TextBox { Name = "WhatsNewBody", Multiline = true, ReadOnly = true, WordWrap = true, ScrollBars = ScrollBars.Vertical, BorderStyle = BorderStyle.None, HideSelection = true, TabStop = false, Font = KavrosTheme.Ui(8.5F, false), BackColor = KavrosTheme.Bg, ForeColor = KavrosTheme.Text, Text = ReleaseNotes.Text() };
+            notesHost.Controls.Add(heading);
+            notesHost.Controls.Add(dismiss);
+            notesHost.Controls.Add(notesBody);
+            Controls.Add(notesHost);
+        }
+        void PlaceReleaseNotes(int top, int width)
+        {
+            notesHost.SetBounds(10, top, width, WhatsNewLayout.BannerHeight);
+            Label heading = (Label)notesHost.Controls["WhatsNewHeading"];
+            Control dismiss = notesHost.Controls["WhatsNewDismiss"];
+            heading.SetBounds(WhatsNewLayout.Pad, 0, Math.Max(40, width - 96), WhatsNewLayout.Header);
+            dismiss.SetBounds(width - 80, 4, 72, WhatsNewLayout.Header - 8);
+            Rectangle body = WhatsNewLayout.Body(notesHost.Bounds);
+            notesBody.SetBounds(body.X, body.Y, body.Width, body.Height);
+            notesBody.SelectionStart = 0;
+            notesBody.SelectionLength = 0;
+        }
+        internal void DismissReleaseNotes()
+        {
+            prefs.SeenNotes = AppBranding.DisplayVersion;
+            prefs.Save();
+            notesOpen = false;
+            LayoutMode();
+        }
+        internal void SyncReleaseNotes()
+        {
+            bool show = ReleaseNotes.IsNewer(prefs.SeenNotes, AppBranding.DisplayVersion);
+            if (show == notesOpen) return;
+            notesOpen = show;
+            LayoutMode();
         }
         private void SelectOrigin(CompassPosition position)
         {
@@ -497,9 +543,11 @@ namespace KavrosClueHelper
             bool compass=mode==PuzzleKind.Compass,scan=mode==PuzzleKind.Scan,emote=mode==PuzzleKind.EmoteClue,sliding=mode==PuzzleKind.Sliding,expanded=!prefs.Collapsed;
             Rectangle scanGuide=ScanGuideBounds(),scanControlsBox=ScanControlBounds(scanControls.Height);
             int bottom=compass?518:scan?ScanFooterTop(scanControls.Height):emote?442:sliding?292:102;
+            bool showNotes=notesOpen&&expanded;
+            int notesExtra=showNotes?WhatsNewLayout.PanelExtra:0;
             int bannerSpace=bannerShown?BannerHeight:0;
-            Size wanted=new Size(400,(prefs.Collapsed?32:bottom+38)+bannerSpace);
-            bool changed=layoutKind!=mode||layoutCollapsed!=prefs.Collapsed||layoutBanner!=bannerShown||ClientSize!=wanted;
+            Size wanted=new Size(400,(prefs.Collapsed?32:bottom+38)+notesExtra+bannerSpace);
+            bool changed=layoutKind!=mode||layoutCollapsed!=prefs.Collapsed||layoutBanner!=bannerShown||layoutNotes!=showNotes||ClientSize!=wanted;
             if(!changed)return;
             SuspendLayout();
             try
@@ -514,8 +562,13 @@ namespace KavrosClueHelper
                 summary.Top=compass||scan?scanGuide.Top:38;summary.Height=scan?scanGuide.Height:56;
                 if(scan){scanControls.SetBounds(scanControlsBox.X,scanControlsBox.Y,scanControlsBox.Width,scanControlsBox.Height);scanControls.BringToFront();}
                 footer.Top=bottom;footer.BringToFront();
+                if(notesHost!=null)
+                {
+                    notesHost.Visible=showNotes;
+                    if(showNotes){PlaceReleaseNotes(footer.Bottom+WhatsNewLayout.PanelGap,380);notesHost.BringToFront();}
+                }
                 if(banner!=null){banner.SetBounds(1,wanted.Height-BannerHeight-1,wanted.Width-2,BannerHeight);banner.Visible=bannerShown;if(bannerShown)banner.BringToFront();}
-                layoutKind=mode;layoutCollapsed=prefs.Collapsed;layoutBanner=bannerShown;
+                layoutKind=mode;layoutCollapsed=prefs.Collapsed;layoutBanner=bannerShown;layoutNotes=showNotes;
             }
             finally{ResumeLayout(true);}
             Invalidate(true);

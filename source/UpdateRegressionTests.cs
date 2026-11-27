@@ -196,7 +196,7 @@ namespace KavrosClueHelper
                 using(var map=new CompassMap(assets)){map.Size=new Size(380,260);map.SetSession(compass,true);using(var bitmap=new Bitmap(380,260))using(var g=Graphics.FromImage(bitmap)){typeof(CompassMap).GetMethod("OnPaint",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(map,new object[]{new PaintEventArgs(g,new Rectangle(0,0,380,260))});bitmap.Save(Path.Combine(Path.GetDirectoryName(report),"compass-map-preview.png"));}}
                 using(var panel=new FloatingCluePanel(assets,compass,new OverlayPreferences(Path.Combine(Path.GetDirectoryName(report),"unused-panel-prefs.txt"))))
                 {
-                    panel.SetPuzzle(master,"");Check(panel.Height==480,"master card retains its complete layout");panel.SetReading("Reading clue...");Check(panel.ReadingStage=="Reading clue...","loading state is exposed");panel.SetReading(null);Check(panel.ReadingStage==null,"loading state clears");panel.SetCompass(false);Check(panel.Height==556,"compass controls fit the panel");
+                    panel.SetPuzzle(master,"");Check(panel.Height==480+WhatsNewLayout.PanelExtra,"master card retains its complete layout");panel.SetReading("Reading clue...");Check(panel.ReadingStage=="Reading clue...","loading state is exposed");panel.SetReading(null);Check(panel.ReadingStage==null,"loading state clears");panel.SetCompass(false);Check(panel.Height==556+WhatsNewLayout.PanelExtra,"compass controls fit the panel");
                 }
 
                 var scanVision=new ScanVision(assets);

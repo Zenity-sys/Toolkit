@@ -1,6 +1,6 @@
 # Kavros Clue Helper v0.9.12
 
-What's new stays at the bottom of the window until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.
+What's new stays on the clue panel until you press Got it. Lockboxes are found during live play on a 1440p client, and the numbers update as soon as you click.
 
 Settings shows **Made by Zenity  ·  v0.9.12**. The full notes are in CHANGELOG.md.
 

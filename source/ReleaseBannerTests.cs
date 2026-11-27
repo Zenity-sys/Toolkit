@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 
@@ -24,51 +25,82 @@ namespace KavrosClueHelper
                 string dir = Path.Combine(Path.GetTempPath(), "kavros-notes-" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(dir);
                 string fresh = Path.Combine(dir, "fresh.txt");
+                string panelFile = Path.Combine(dir, "panel.txt");
                 string seen = Path.Combine(dir, "seen.txt");
                 File.WriteAllText(seen, "seen-notes\t" + AppBranding.DisplayVersion + "\r\n");
-                using (PuzzleSuiteForm open = new PuzzleSuiteForm(new OverlayPreferences(fresh), false))
-                using (PuzzleSuiteForm closed = new PuzzleSuiteForm(new OverlayPreferences(seen), false))
+                using (PuzzleSuiteForm settings = new PuzzleSuiteForm(new OverlayPreferences(fresh), false))
                 {
-                    StopTimer(open);
-                    StopTimer(closed);
-                    ShowOffscreen(open);
-                    ShowOffscreen(closed);
-                    check(open.AutoScaleMode == AutoScaleMode.None, "the window is laid out at 96 DPI without auto scaling");
-                    Panel banner = (Panel)open.Controls["WhatsNewBanner"];
+                    StopTimer(settings);
+                    ShowOffscreen(settings);
+                    check(settings.AutoScaleMode == AutoScaleMode.None, "the window is laid out at 96 DPI without auto scaling");
+                    Panel hidden = (Panel)settings.Controls["WhatsNewBanner"];
+                    check(hidden != null && !hidden.Visible, "settings does not open What's new on startup");
+                    int closedHeight = settings.ClientSize.Height;
+                    settings.ShowReleaseBanner();
+                    Application.DoEvents();
+                    Panel banner = (Panel)settings.Controls["WhatsNewBanner"];
                     TextBox body = (TextBox)banner.Controls["WhatsNewBody"];
                     Label heading = (Label)banner.Controls["WhatsNewHeading"];
                     Control dismiss = banner.Controls["WhatsNewDismiss"];
-                    check(banner.Visible && heading.Text == "What's new" && heading.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the gold What's new header is showing");
-                    check(dismiss.Text == "Got it" && dismiss.Right <= banner.Width && heading.Left < dismiss.Left, "Got it sits on the right of the header");
-                    check(body.ScrollBars == ScrollBars.Vertical && body.ReadOnly && body.Text.Contains("v0.9.12"), "the changelog scrolls and lists this version");
-                    Rectangle client = open.ClientRectangle;
+                    Rectangle card = ClientCard(settings);
+                    Rectangle client = settings.ClientRectangle;
                     Rectangle text = new Rectangle(banner.Left + body.Left, banner.Top + body.Top, body.Width, body.Height);
-                    int below = client.Height - text.Bottom;
-                    check(client.Contains(banner.Bounds), "the banner sits inside the client (" + banner.Bounds + " / " + client + ")");
-                    check(client.Contains(text), "the scrollable notes sit inside the client (" + text + " / " + client + ")");
-                    check(below >= WhatsNewLayout.Bottom, "the notes have " + below + " px under them");
-                    check(banner.Left >= WhatsNewLayout.Side && banner.Right <= client.Width - WhatsNewLayout.Side, "the banner keeps its side margins");
-                    check(body.Left >= WhatsNewLayout.Pad && body.Right <= banner.Width - WhatsNewLayout.Pad && body.Bottom <= banner.Height - WhatsNewLayout.Pad, "the notes stay inside the banner with padding");
-                    check(text.Right <= client.Width - WhatsNewLayout.Side && text.Bottom <= client.Height - WhatsNewLayout.Bottom, "nothing in the notes crosses the window edge");
-                    Label footer = (Label)open.Controls.Find("BuildCredit", true)[0];
-                    check(banner.Bottom <= footer.Top - WhatsNewLayout.Bottom && footer.Bottom <= client.Height, "the footer stays below the banner and inside the window");
-                    int grown = open.ClientSize.Height;
-                    check(grown == closed.ClientSize.Height + WhatsNewLayout.Extra, "the window grows by the banner and its bottom margin");
-                    Save(open, "/opt/cursor/artifacts/whats-new-banner.png");
-                    open.DismissReleaseNotes();
-                    check(!banner.Visible && open.ClientSize.Height == grown - WhatsNewLayout.Extra, "Got it restores the window");
-                    foreach (Control child in open.Controls)
-                        if (child.Visible) check(child.Bottom <= open.ClientSize.Height && child.Right <= open.ClientSize.Width, child.Name + " stays inside after dismiss (" + child.Bounds + ")");
-                    Save(open, "/opt/cursor/artifacts/whats-new-dismissed.png");
-                    OverlayPreferences stored = new OverlayPreferences(fresh);
-                    check(stored.SeenNotes == AppBranding.DisplayVersion, "Got it saves the current version");
-                    using (PuzzleSuiteForm again = new PuzzleSuiteForm(new OverlayPreferences(fresh), false))
+                    int gap = banner.Top - card.Bottom;
+                    check(banner.Visible && heading.Text == "What's new" && heading.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the settings banner has a gold What's new header");
+                    check(dismiss.Text == "Got it" && dismiss.Right <= banner.Width && heading.Left < dismiss.Left, "Got it sits on the right of the settings header");
+                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.12"), "the settings changelog scrolls");
+                    check(!card.IsEmpty && gap >= 12 && gap <= 16, "the banner sits " + gap + " px below the CLIENT card");
+                    check(!banner.Bounds.IntersectsWith(card), "the banner does not cover the CLIENT card");
+                    MainSurface surface = settings.Controls.OfType<MainSurface>().Single();
+                    foreach (Control child in surface.Controls)
                     {
-                        StopTimer(again);
-                        ShowOffscreen(again);
-                        check(!again.Controls["WhatsNewBanner"].Visible && again.ClientSize.Height == open.ClientSize.Height, "the saved version keeps the banner hidden");
+                        if (!child.Visible || child.Width < 1 || child.Height < 1) continue;
+                        Rectangle placed = new Rectangle(surface.Left + child.Left, surface.Top + child.Top + surface.AutoScrollPosition.Y, child.Width, child.Height);
+                        check(!banner.Bounds.IntersectsWith(placed), (child.Name.Length == 0 ? child.Text : child.Name) + " stays clear of What's new");
                     }
-                    check(!closed.Controls["WhatsNewBanner"].Visible, "a window that already saw this version stays closed");
+                    check(client.Contains(banner.Bounds) && client.Contains(text), "the settings notes sit inside the client");
+                    check(client.Height - text.Bottom >= WhatsNewLayout.Bottom, "the settings notes clear the bottom edge");
+                    check(body.Bottom <= banner.Height - WhatsNewLayout.Pad && body.Right <= banner.Width - WhatsNewLayout.Pad, "the settings scrollbar stays inside the banner");
+                    Label credit = (Label)settings.Controls.Find("BuildCredit", true)[0];
+                    check(banner.Bottom <= credit.Top - WhatsNewLayout.Bottom && credit.Bottom <= client.Height, "the settings footer stays below the banner");
+                    check(settings.ClientSize.Height > closedHeight, "the settings window grows to hold the banner");
+                    Save(settings, "/opt/cursor/artifacts/settings-whats-new-fixed.png");
+                    settings.DismissReleaseNotes();
+                    check(!banner.Visible && settings.ClientSize.Height == closedHeight, "Got it on settings restores the window");
+                }
+                string assets = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "assets");
+                using (FloatingCluePanel panel = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(panelFile)))
+                using (FloatingCluePanel quiet = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(seen)))
+                {
+                    panel.SetWaiting("Open a clue or puzzle in Kavros.");
+                    ShowAt(panel, new Point(40, 40));
+                    ShowAt(quiet, new Point(1400, 40));
+                    Panel banner = (Panel)panel.Controls["WhatsNewBanner"];
+                    TextBox body = (TextBox)banner.Controls["WhatsNewBody"];
+                    Label heading = (Label)banner.Controls["WhatsNewHeading"];
+                    Control dismiss = banner.Controls["WhatsNewDismiss"];
+                    Panel buttons = Footer(panel);
+                    check(banner.Visible && heading.Text == "What's new" && heading.ForeColor.ToArgb() == KavrosTheme.Gold.ToArgb(), "the clue panel shows a gold What's new header");
+                    check(dismiss.Text == "Got it" && heading.Left < dismiss.Left, "Got it sits on the right of the clue panel header");
+                    check(body.ScrollBars == ScrollBars.Vertical && body.Text.Contains("v0.9.8"), "the clue panel changelog scrolls through v0.9.8");
+                    CheckPanel(check, panel, banner, body, buttons, "idle");
+                    int grown = panel.Height;
+                    check(grown == 140 + WhatsNewLayout.PanelExtra, "the idle panel grows by the notes block");
+                    check(!quiet.Controls["WhatsNewBanner"].Visible && quiet.Height == 140, "a panel that already saw this version stays at its normal height");
+                    SaveScreen(panel, "/opt/cursor/artifacts/floating-whats-new-banner.png");
+                    panel.SetPuzzle(new DetectedPuzzle { Kind = PuzzleKind.Towers }, "Corners show clicks left. Green 0 means complete.");
+                    buttons = Footer(panel);
+                    CheckPanel(check, panel, banner, body, buttons, "puzzle");
+                    check(panel.Height == 140 + WhatsNewLayout.PanelExtra, "puzzle text keeps the same notes block");
+                    panel.SetWaiting("Open a clue or puzzle in Kavros.");
+                    panel.DismissReleaseNotes();
+                    check(!banner.Visible && panel.Height == 140, "Got it restores the idle panel");
+                    check(buttons.Bottom <= panel.ClientSize.Height && panel.ClientRectangle.Contains(buttons.Bounds), "the button row stays inside after dismiss");
+                    SaveScreen(panel, "/opt/cursor/artifacts/floating-whats-new-dismissed.png");
+                    OverlayPreferences stored = new OverlayPreferences(panelFile);
+                    check(stored.SeenNotes == AppBranding.DisplayVersion, "Got it saves the current version");
+                    using (FloatingCluePanel again = new FloatingCluePanel(assets, new CompassSession(assets), new OverlayPreferences(panelFile)))
+                        check(!again.ReleaseNotesOpen && again.Height == 140, "the saved version keeps the clue panel notes hidden");
                 }
                 File.AppendAllText(report, "WHAT'S NEW PASS: " + count + " assertions.\r\n");
                 return 0;
@@ -77,6 +109,56 @@ namespace KavrosClueHelper
             {
                 File.AppendAllText(report, "FAILED after " + count + " checks: " + ex + "\r\n");
                 return 1;
+            }
+        }
+        static void CheckPanel(Action<bool, string> check, FloatingCluePanel panel, Panel banner, TextBox body, Panel buttons, string mode)
+        {
+            Rectangle client = panel.ClientRectangle;
+            Rectangle text = new Rectangle(banner.Left + body.Left, banner.Top + body.Top, body.Width, body.Height);
+            int gap = banner.Top - buttons.Bottom;
+            check(gap >= 10 && gap <= 12, mode + " notes sit " + gap + " px below the button row");
+            check(!banner.Bounds.IntersectsWith(buttons.Bounds), mode + " notes do not cover the button row");
+            check(client.Contains(banner.Bounds) && client.Contains(text), mode + " notes sit inside the clue panel");
+            check(client.Height - text.Bottom >= WhatsNewLayout.PanelBottom, mode + " notes clear the bottom edge");
+            check(body.Right <= banner.Width - WhatsNewLayout.Pad && body.Bottom <= banner.Height - WhatsNewLayout.Pad, mode + " scrollbar stays inside the banner");
+            check(buttons.Bottom < banner.Top, mode + " button row stays above What's new");
+        }
+        static Rectangle ClientCard(Form form)
+        {
+            MainSurface surface = form.Controls.OfType<MainSurface>().Single();
+            foreach (MainSurface.Card card in surface.Cards)
+                if (card.Label == "CLIENT")
+                    return new Rectangle(surface.Left + card.Bounds.X, surface.Top + card.Bounds.Y + surface.AutoScrollPosition.Y, card.Bounds.Width, card.Bounds.Height);
+            return Rectangle.Empty;
+        }
+        static Panel Footer(Control panel)
+        {
+            foreach (Panel item in panel.Controls.OfType<Panel>())
+                foreach (Button button in item.Controls.OfType<Button>())
+                    if (button.Text == "Exit") return item;
+            return null;
+        }
+        static void ShowAt(Form form, Point location)
+        {
+            form.ShowInTaskbar = false;
+            form.StartPosition = FormStartPosition.Manual;
+            form.Location = location;
+            form.Show();
+            form.BringToFront();
+            Application.DoEvents();
+        }
+        static void SaveScreen(Form form, string path)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            form.Refresh();
+            Application.DoEvents();
+            System.Threading.Thread.Sleep(250);
+            Application.DoEvents();
+            using (Bitmap bitmap = new Bitmap(form.Width, form.Height))
+            {
+                using (Graphics g = Graphics.FromImage(bitmap))
+                    g.CopyFromScreen(form.Location, Point.Empty, bitmap.Size);
+                bitmap.Save(path, System.Drawing.Imaging.ImageFormat.Png);
             }
         }
         static void ShowOffscreen(Form form)

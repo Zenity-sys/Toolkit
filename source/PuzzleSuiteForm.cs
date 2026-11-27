@@ -251,7 +251,6 @@ namespace KavrosClueHelper
             KavrosTheme.AddMainCards(this);
             closedClientHeight = ClientSize.Height;
             BuildReleaseBanner();
-            if (ReleaseNotes.IsNewer(preferences.SeenNotes, AppBranding.DisplayVersion)) ShowReleaseBanner();
             if(NoTrayOnLaunch)tray=new NotifyIcon();else
             tray=new NotifyIcon{Icon=this.Icon,Text="Kavros Clue Helper",ContextMenuStrip=trayMenu,Visible=true};tray.DoubleClick+=delegate{ShowSettings();};
             Shown+=delegate{raiseUntil=DateTime.UtcNow.AddSeconds(8);if(startWithPanel&&preferences.Enabled){Hide();UpdateFloatingPanel();}if(startWithPanel&&ShowPanelOnLaunch)OpenPanel();};
@@ -266,6 +265,7 @@ namespace KavrosClueHelper
         }
         private NoticeToast notice;
         private int closedClientHeight;
+        private int notesShift;
         private bool notesOpen;
         private Panel notesHost;
         private TextBox notesBody;
@@ -304,6 +304,7 @@ namespace KavrosClueHelper
             preferences.Save();
             notesOpen = false;
             ApplyReleaseLayout();
+            if (floatingPanel != null && !floatingPanel.IsDisposed) floatingPanel.SyncReleaseNotes();
         }
         private void HideReleaseNotes()
         {
@@ -315,24 +316,77 @@ namespace KavrosClueHelper
             if (notesOpen) HideReleaseNotes();
             else ShowReleaseBanner();
         }
+        MainSurface SettingsBody()
+        {
+            return Controls.OfType<MainSurface>().Single();
+        }
+        int ClientCardBottom(MainSurface surface)
+        {
+            foreach (MainSurface.Card card in surface.Cards)
+                if (card.Label == "CLIENT") return card.Bounds.Bottom;
+            return 0;
+        }
+        Rectangle ClientCardOnForm()
+        {
+            MainSurface surface = SettingsBody();
+            foreach (MainSurface.Card card in surface.Cards)
+                if (card.Label == "CLIENT")
+                    return new Rectangle(surface.Left + card.Bounds.X, surface.Top + card.Bounds.Y + surface.AutoScrollPosition.Y, card.Bounds.Width, card.Bounds.Height);
+            return Rectangle.Empty;
+        }
+        void ShiftContentBelow(MainSurface body, int cardBottom, int delta)
+        {
+            if (delta == 0) return;
+            foreach (Control child in body.Controls)
+                if (child.Top >= cardBottom) child.Top += delta;
+            Size scroll = body.AutoScrollMinSize;
+            body.AutoScrollMinSize = new Size(scroll.Width, Math.Max(0, scroll.Height + delta));
+        }
         private void ApplyReleaseLayout()
         {
             if (notesHost == null) return;
-            int height = notesOpen ? closedClientHeight + WhatsNewLayout.Extra : closedClientHeight;
-            if (ClientSize.Height != height) ClientSize = new Size(ClientSize.Width, height);
+            MainSurface body = SettingsBody();
+            int cardBottom = ClientCardBottom(body);
             if (!notesOpen)
             {
+                if (notesShift != 0)
+                {
+                    ShiftContentBelow(body, cardBottom, -notesShift);
+                    notesShift = 0;
+                }
+                if (ClientSize.Height != closedClientHeight) ClientSize = new Size(ClientSize.Width, closedClientHeight);
                 notesHost.Visible = false;
                 return;
             }
-            Rectangle host = WhatsNewLayout.Host(ClientSize);
-            notesHost.SetBounds(host.X, host.Y, host.Width, host.Height);
+            if (notesShift == 0 && cardBottom > 0)
+            {
+                int nextTop = int.MaxValue;
+                foreach (Control child in body.Controls)
+                    if (child.Top >= cardBottom && child.Top < nextTop) nextTop = child.Top;
+                int following = nextTop == int.MaxValue ? WhatsNewLayout.Bottom : nextTop - cardBottom;
+                notesShift = WhatsNewLayout.ClientGap + WhatsNewLayout.BannerHeight + following;
+                ShiftContentBelow(body, cardBottom, notesShift);
+            }
+            int contentBottom = 0;
+            foreach (Control child in body.Controls)
+                if (child.Bottom > contentBottom) contentBottom = child.Bottom;
+            Rectangle card = ClientCardOnForm();
+            int bannerTop = card.IsEmpty ? closedClientHeight - AppBranding.FooterHeight : card.Bottom + WhatsNewLayout.ClientGap;
+            int needed = bannerTop + WhatsNewLayout.BannerHeight + WhatsNewLayout.Bottom + AppBranding.FooterHeight;
+            int contentNeeded = body.Top + contentBottom + 16 + AppBranding.FooterHeight;
+            if (contentNeeded > needed) needed = contentNeeded;
+            int height = Math.Max(closedClientHeight, needed);
+            if (ClientSize.Height != height) ClientSize = new Size(ClientSize.Width, height);
+            card = ClientCardOnForm();
+            if (!card.IsEmpty) bannerTop = card.Bottom + WhatsNewLayout.ClientGap;
+            int width = Math.Max(40, ClientSize.Width - WhatsNewLayout.Side * 2);
+            notesHost.SetBounds(WhatsNewLayout.Side, bannerTop, width, WhatsNewLayout.BannerHeight);
             Label heading = (Label)notesHost.Controls["WhatsNewHeading"];
             Control dismiss = notesHost.Controls["WhatsNewDismiss"];
-            heading.SetBounds(WhatsNewLayout.Pad, 0, Math.Max(40, host.Width - 96), WhatsNewLayout.Header);
-            dismiss.SetBounds(host.Width - 80, 4, 72, WhatsNewLayout.Header - 8);
-            Rectangle body = WhatsNewLayout.Body(host);
-            notesBody.SetBounds(body.X, body.Y, body.Width, body.Height);
+            heading.SetBounds(WhatsNewLayout.Pad, 0, Math.Max(40, width - 96), WhatsNewLayout.Header);
+            dismiss.SetBounds(width - 80, 4, 72, WhatsNewLayout.Header - 8);
+            Rectangle notes = WhatsNewLayout.Body(notesHost.Bounds);
+            notesBody.SetBounds(notes.X, notes.Y, notes.Width, notes.Height);
             notesHost.Visible = true;
             notesHost.BringToFront();
             notesBody.SelectionStart = 0;

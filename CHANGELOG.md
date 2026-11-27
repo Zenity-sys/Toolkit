@@ -3,7 +3,7 @@
 ## 0.9.12
 
 **Puzzles**
-- What's new stays at the bottom of the window until you press Got it. The note lists this version and the recent ones, and it comes back only after the next update.
+- What's new stays on the clue panel until you press Got it. The note lists this version and the recent ones, and it comes back only after the next update. Settings can open the same note from its What's new button.
 - Lockboxes are found during live play on a 1440p client. The numbers update as soon as you click.
 
 ## 0.9.11
