@@ -31,7 +31,14 @@ namespace KavrosClueHelper
         {
             int pitch = puzzle.Kind == PuzzleKind.Sliding ? 56 : puzzle.Kind == PuzzleKind.Towers ? 44 : 38;
             int size = puzzle.Kind == PuzzleKind.Sliding ? 49 : puzzle.Kind == PuzzleKind.Towers ? 42 : 30;
-            return new Rectangle(puzzle.Grid.X + (int)Math.Round(index % 5 * pitch * puzzle.Scale), puzzle.Grid.Y + (int)Math.Round(index / 5 * pitch * puzzle.Scale), (int)Math.Round(size * puzzle.Scale), (int)Math.Round(size * puzzle.Scale));
+            int insetX = 0, insetY = 0;
+            if (puzzle.Kind == PuzzleKind.Lockbox && puzzle.TileSize > 0)
+            {
+                size = puzzle.TileSize;
+                insetX = puzzle.TileInsetX;
+                insetY = puzzle.TileInsetY;
+            }
+            return new Rectangle(puzzle.Grid.X + (int)Math.Round((index % 5 * pitch + insetX) * puzzle.Scale), puzzle.Grid.Y + (int)Math.Round((index / 5 * pitch + insetY) * puzzle.Scale), (int)Math.Round(size * puzzle.Scale), (int)Math.Round(size * puzzle.Scale));
         }
         public static List<GuidanceMark> SliderMarks(DetectedPuzzle puzzle,IList<int> moves,int firstNumber=1,int maximum=4)
         {

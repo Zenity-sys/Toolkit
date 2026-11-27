@@ -1,3 +1,9 @@
+# Kavros Clue Helper v0.9.16
+
+Clicking Clue Helper in Companion opens the panel full size, even if it was collapsed. DarkScape lockbox boxes sit on the tiles, and the click numbers count down while a tile is highlighted.
+
+Settings shows **Made by Zenity  ·  v0.9.16**. The full notes are in CHANGELOG.md.
+
 # Kavros Clue Helper v0.9.15
 
 Auto capture finds the Kavros client again, including when Windows hides the process name. Notepad, browsers, and other programs are still skipped when Kavros is only in the title.

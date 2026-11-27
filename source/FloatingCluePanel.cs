@@ -348,6 +348,14 @@ namespace KavrosClueHelper
         private int displayedMasterId=-1;
         public event Action SettingsRequested,ScanRequested,PauseRequested,ExitRequested,UserMoved,ClearRequested,DebugRequested;
         public bool Collapsed {get{return prefs.Collapsed;}}
+        internal void Expand()
+        {
+            if(!prefs.Collapsed)return;
+            prefs.Collapsed=false;
+            collapse.Text="-";
+            prefs.Save();
+            LayoutMode();
+        }
         public bool IsDragging {get{return dragging;}}
         public void SetAnchor(Rectangle game){anchor=game;}
         public void PlaceTopMost(bool top)
